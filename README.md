@@ -1,3 +1,6 @@
+# docuzy
+Docuzy is a document editing tool that edit everytype of documents at one place to help student.
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
