@@ -17,7 +17,7 @@ export default async function Home() {
           <span>Waitlist v1 · Coming Soon</span>
         </div>
 
-        <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 text-transparent bg-clip-text bg-gradient-to-b from-zinc-100 to-zinc-500">
+        <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 text-transparent bg-clip-text bg-gradient-to-b from-zinc-100 to-zinc-500 selection:text-zinc-900">
           Your Entire Workspace. <br className="hidden md:block" />
           Organized & AI-Powered.
         </h1>

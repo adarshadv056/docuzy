@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { CheckCircle2 } from "lucide-react";
+import { useState } from "react";
+import { CheckCircle2, X } from "lucide-react";
 import { getWaitlistCount, joinWaitlist } from "@/actions/waitlist";
 
 export default function WaitlistForm({ initialCount }: { initialCount: number }) {
@@ -13,13 +13,11 @@ export default function WaitlistForm({ initialCount }: { initialCount: number })
     const onSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // const prevCount = count;
         setStatus("loading");
         setMessage("");
-        // setCount(prev => prev + 1);
 
         const result = await joinWaitlist(email);
-        
+
         if (result.success) {
             setStatus("success");
             setEmail("");
@@ -32,16 +30,40 @@ export default function WaitlistForm({ initialCount }: { initialCount: number })
         }
     };
 
+    const shareOnX = () => {
+        const siteUrl = window.location.origin;
+
+        const tweetText = `Finally, an AI that actually organizes my chaos. 🧠 I just joined the waitlist for ${siteUrl} to automate my entire workflow. Join me here: `;
+
+        const encodedText = encodeURIComponent(tweetText);
+        const encodedUrl = encodeURIComponent(siteUrl);
+
+        window.open(`https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`, "_blank");
+    };
+
     if (status === "success") {
         return (
-            <div className="flex flex-col items-center justify-center p-1 animate-in fade-in zoom-in duration-500">
-                <div className="flex items-center space-x-2 text-zinc-200 bg-zinc-800/80 px-6 py-3 rounded-xl border border-zinc-700 font-medium">
-                    <CheckCircle2 className="w-5 h-5 text-zinc-300" />
-                    <span>You're on the list. We'll be in touch.</span>
+            <div className="flex items-center justify-between w-full max-w-xl animate-in fade-in zoom-in duration-500">
+
+                <div className="flex items-center gap-2 text-zinc-200 px-4 py-2 font-medium">
+                    <CheckCircle2 className="w-5 h-5 text-zinc-400" />
+                    <span>You're in the vault. We'll be in touch.</span>
                 </div>
+
+                <button
+                    onClick={shareOnX}
+                    className="group flex items-center gap-2 text-zinc-200 bg-zinc-800/50 px-4 py-2 rounded-xl border border-zinc-700/50 font-medium shadow-xl backdrop-blur-sm hover:bg-zinc-800/70 transition"
+                >
+                    {/* <X className="w-3.5 h-3.5 transition-transform group-hover:scale-110" /> */}
+                    <span className="cursor-pointer border-transparent pb-0.5 transition">
+                        Share on X
+                    </span>
+                </button>
+
             </div>
         );
     }
+
 
     return (
         <div className="w-full">
@@ -67,6 +89,7 @@ export default function WaitlistForm({ initialCount }: { initialCount: number })
             {status === "error" && (
                 <p className="mt-2 text-sm text-red-400 font-medium text-left px-2">{message}</p>
             )}
+
         </div>
     );
 }
