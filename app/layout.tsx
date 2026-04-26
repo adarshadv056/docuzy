@@ -24,7 +24,7 @@ export const metadata: Metadata = {
       "Every editing tool you need, in one place. Organize your files, share your work, and let our AI handle the heavy lifting.",
     images: [
       {
-        url: "https://docuzy.vercel.app/public/HomePage.png",
+        url: "https://docuzy.vercel.app/HomePage.png",
         width: 1200,
         height: 630,
         alt: "Docuzy Preview",
