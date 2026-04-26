@@ -4,8 +4,15 @@ import { useState } from "react";
 import { CheckCircle2, X } from "lucide-react";
 import { getWaitlistCount, joinWaitlist } from "@/actions/waitlist";
 
+declare global {
+    interface Window {
+        gtag?: (...args: unknown[]) => void;
+    }
+}
+
 export default function WaitlistForm({ initialCount }: { initialCount: number }) {
     const [email, setEmail] = useState("");
+    const [company, setCompany] = useState("");
     const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
     const [message, setMessage] = useState("");
     const [count, setCount] = useState<number>(initialCount);
@@ -16,12 +23,17 @@ export default function WaitlistForm({ initialCount }: { initialCount: number })
         setStatus("loading");
         setMessage("");
 
-        const result = await joinWaitlist(email);
+        const result = await joinWaitlist(email, company);
 
         if (result.success) {
             setStatus("success");
             setEmail("");
-
+            if (typeof window !== "undefined" && window.gtag) {
+                window.gtag('event', 'waitlist_joined', {
+                    event_category: 'engagement',
+                    event_label: 'waitlist_form',
+                });
+            }
             const newCount = await getWaitlistCount();
             setCount(newCount);
         } else {
@@ -77,6 +89,7 @@ export default function WaitlistForm({ initialCount }: { initialCount: number })
                     className="flex-1 h-12 p-4 bg-zinc-950/50 border border-zinc-800 rounded-xl text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-600 transition-all"
                     disabled={status === "loading"}
                 />
+                <input type="text" name="company" onChange={(e) => setCompany(e.target.value)} style={{ display: "none" }} />
                 <button
                     type="submit"
                     disabled={status === "loading"}
