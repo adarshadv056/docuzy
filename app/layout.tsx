@@ -31,6 +31,13 @@ export const metadata: Metadata = {
       },
     ],
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "Docuzy | Your Organized & AI-Powered Workspace",
+    description:
+      "Every editing tool you need, in one place. Organize your files, share your work, and let our AI handle the heavy lifting.",
+    images: ["https://docuzy.vercel.app/Homepage.png"],
+  },
 };
 
 export default function RootLayout({
