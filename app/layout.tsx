@@ -15,18 +15,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://docuzy.vercel.app"),
+  metadataBase: new URL("https://docuzy.app"),
   title: "Docuzy | Your Organized & AI-Powered Workspace",
   description: "Every editing tool you need, in one place. Organize your files, share your work, and let our AI handle the heavy lifting.",
   openGraph: {
     type: "website",
-    url: "https://docuzy.vercel.app/",
+    url: "https://docuzy.app/",
     title: "Docuzy | Your Organized & AI-Powered Workspace",
     description:
       "Every editing tool you need, in one place. Organize your files, share your work, and let our AI handle the heavy lifting.",
     images: [
       {
-        url: "https://docuzy.vercel.app/Homepage.png",
+        url: "https://docuzy.app/Homepage.png",
         width: 1200,
         height: 630,
         alt: "Docuzy Preview",
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     title: "Docuzy | Your Organized & AI-Powered Workspace",
     description:
       "Every editing tool you need, in one place. Organize your files, share your work, and let our AI handle the heavy lifting.",
-    images: ["https://docuzy.vercel.app/Homepage.png"],
+    images: ["https://docuzy.app/Homepage.png"],
   },
 };
 
