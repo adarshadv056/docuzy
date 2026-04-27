@@ -14,7 +14,7 @@ export default async function Home() {
 
         <div className="inline-flex items-center px-3 py-1.5 mb-8 space-x-2 text-sm font-medium rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300">
           <Sparkles className="w-4 h-4 text-zinc-400" />
-          <span>Waitlist v1 · Coming Soon</span>
+          <span>Docuzy · Coming Soon</span>
         </div>
 
         <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 text-transparent bg-clip-text bg-gradient-to-b from-zinc-100 to-zinc-500 selection:text-zinc-900">
@@ -24,7 +24,7 @@ export default async function Home() {
 
         <p className="max-w-2xl mx-auto text-lg md:text-xl text-zinc-400 mb-10 font-medium leading-relaxed">
           Every editing tool you need, in one place. Organize your files, share your work,
-          and let our AI handle the heavy lifting.
+          and let our AI handle the heavy lifting with <span className="font-bold">Docuzy</span>.
         </p>
 
         <div className="w-full max-w-md backdrop-blur-md bg-zinc-900/50 p-2 rounded-2xl border border-zinc-800 shadow-2xl">
