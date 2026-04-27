@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
+import { Analytics } from "@vercel/analytics/next"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -53,7 +54,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-zinc-950 text-zinc-50">
         <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-DQ9V19DJE7"
+          src={`https://www.googletagmanager.com/gtag/js?id=${process.env.GA_ID}`}
           strategy="afterInteractive"
         />
 
@@ -62,10 +63,11 @@ export default function RootLayout({
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', 'G-DQ9V19DJE7');
+            gtag('config', '${process.env.GA_ID}');
           `}
         </Script>
         {children}
+        <Analytics />
       </body>
     </html>
   );
