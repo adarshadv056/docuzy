@@ -45,7 +45,8 @@ export default function WaitlistForm({ initialCount }: { initialCount: number })
     const shareOnX = () => {
         const siteUrl = window.location.origin;
 
-        const tweetText = `Finally, an AI that actually organizes my chaos. 🧠 I just joined the waitlist for ${siteUrl} to automate my entire workflow. Join me here: `;
+        const tweetText = `All tools. All files. One place 🧠
+        Docuzy is building a smarter way to edit, store, and organize everything with AI. I’m on the waitlist: ${siteUrl} `;
 
         const encodedText = encodeURIComponent(tweetText);
         const encodedUrl = encodeURIComponent(siteUrl);
