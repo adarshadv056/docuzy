@@ -14,7 +14,7 @@ export default async function Home() {
 
         <div className="inline-flex items-center px-3 py-1.5 mb-8 space-x-2 text-sm font-medium rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300">
           <Sparkles className="w-4 h-4 text-zinc-400" />
-          <span>Waitlist v1 · Coming Soon</span>
+          <span>Waitlist v1 · Live Now</span>
         </div>
 
         <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 text-transparent bg-clip-text bg-gradient-to-b from-zinc-100 to-zinc-500">
