@@ -40,9 +40,9 @@ export default function Home() {
             Start Building
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
           </Link>
-          <Link href="/login" className="px-10 py-4 bg-zinc-900/50 text-zinc-300 font-bold rounded-xl border border-zinc-800 transition-all hover:bg-zinc-800 backdrop-blur-md">
+          {/* <Link href="/login" className="px-10 py-4 bg-zinc-900/50 text-zinc-300 font-bold rounded-xl border border-zinc-800 transition-all hover:bg-zinc-800 backdrop-blur-md">
             Login to Dashboard  
-          </Link>
+          </Link> */}
         </div>
 
         <div className="relative w-full max-w-6xl aspect-[16/10] rounded-2xl border border-zinc-800 bg-zinc-900/20 backdrop-blur-sm overflow-hidden shadow-2xl group">
