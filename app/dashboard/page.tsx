@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma"
 import UploadDropzone from "@/components/UploadDropzone"
 import { FileText } from "lucide-react"
 import { redirect } from "next/navigation"
+import ChatZone from "@/components/ChatZone"
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -14,7 +15,7 @@ export default async function DashboardPage() {
   const documents = await prisma.document.findMany({
     where: { userId: session?.user?.id },
     orderBy: { createdAt: "desc" },
-  })
+  })  
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-50 p-8 font-sans">
@@ -67,6 +68,8 @@ export default async function DashboardPage() {
         </div>
 
         <UploadDropzone />
+
+        <ChatZone />
       </div>
     </main>
   )

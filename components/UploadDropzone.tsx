@@ -9,15 +9,16 @@ export default function UploadDropzone() {
     const [isUploading, setIsUploading] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
-    const handleFile = async (file: File) => {
-        if (!file) return
+    const handleFiles = async (files: File[]) => {
+        if (!files.length) return
         setIsUploading(true)
 
-        const formData = new FormData()
-        formData.append("file", file)
-
         try {
-            await uploadDocument(formData)
+            for (const file of files) {
+                const formData = new FormData()
+                formData.append("file", file)
+                await uploadDocument(formData)
+            }
         } catch (error) {
             console.error("Upload failed:", error)
         } finally {
@@ -28,24 +29,25 @@ export default function UploadDropzone() {
     return (
         <div
             className={`relative w-full p-12 border-2 border-dashed rounded-3xl text-center transition-all duration-300 ${isDragging
-                    ? "border-indigo-500 bg-indigo-500/10"
-                    : "border-zinc-800 bg-zinc-900/20 hover:bg-zinc-900/40 hover:border-zinc-700"
+                ? "border-indigo-500 bg-indigo-500/10"
+                : "border-zinc-800 bg-zinc-900/20 hover:bg-zinc-900/40 hover:border-zinc-700"
                 }`}
             onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
             onDragLeave={() => setIsDragging(false)}
             onDrop={(e) => {
                 e.preventDefault()
                 setIsDragging(false)
-                const droppedFile = e.dataTransfer.files[0]
-                handleFile(droppedFile)
+                const droppedFiles = Array.from(e.dataTransfer.files)
+                handleFiles(droppedFiles)
             }}
         >
             <input
                 type="file"
                 className="hidden"
+                multiple
                 ref={fileInputRef}
                 onChange={(e) => {
-                    if (e.target.files) handleFile(e.target.files[0])
+                    if (e.target.files) handleFiles(Array.from(e.target.files))
                 }}
             />
 
