@@ -1,6 +1,5 @@
 import { auth, signIn } from "@/auth"
-const session = await auth()
-console.log(session)
+
 export default function LoginPage() {
   return (
     <main className="relative min-h-screen bg-zinc-950 text-zinc-50 flex items-center justify-center font-sans overflow-hidden">
