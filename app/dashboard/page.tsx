@@ -15,7 +15,7 @@ export default async function DashboardPage() {
   const documents = await prisma.document.findMany({
     where: { userId: session?.user?.id },
     orderBy: { createdAt: "desc" },
-  })  
+  })
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-50 p-8 font-sans">
@@ -60,7 +60,7 @@ export default async function DashboardPage() {
                 <div key={doc.id} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:bg-zinc-800 transition-colors">
                   <FileText className="w-8 h-8 text-blue-500 mb-2" />
                   <h3 className="font-bold">{doc.title}</h3>
-                  <p className="text-sm text-zinc-400">{doc.content}</p>
+                  <p className="text-sm text-zinc-400">{doc.content?.slice(0, 100)} ...</p>
                 </div>
               ))}
             </div>
