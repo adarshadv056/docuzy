@@ -1,56 +1,93 @@
 "use server"
 
-import { put } from "@vercel/blob"
+import { put, del } from "@vercel/blob"
 import prisma from "@/lib/prisma"
 import { auth } from "@/auth"
 import { revalidatePath } from "next/cache"
-// @ts-ignore
-import pdfParse from "pdf-parse/lib/pdf-parse";
+import {
+    extractDocumentContent,
+    MAX_UPLOAD_BYTES,
+    ACCEPTED_IMAGE_TYPES,
+} from "@/lib/processors/extractor"
+
+function isAcceptedType(file: File): boolean {
+    return (
+        file.type === "application/pdf" ||
+        ACCEPTED_IMAGE_TYPES.includes(file.type) ||
+        file.type === "text/plain" ||
+        file.type === "text/markdown" ||
+        /\.(txt|md|markdown)$/i.test(file.name)
+    )
+}
+
+function sanitizeFileName(name: string): string {
+    const base = name.split(/[\\/]+/).pop() || "file"
+    const cleaned = base.replace(/[\x00-\x1f\x7f]/g, "").trim()
+    return (cleaned || "file").slice(0, 120)
+}
 
 export async function uploadDocument(formData: FormData) {
     const session = await auth()
 
     if (!session?.user?.email) {
-        throw new Error("Unauthorized")
+        return { success: false as const, message: "Unauthorized" }
     }
 
-    const file = formData.get("file") as File
-    if (!file) {
-        throw new Error("No file provided")
+    const file = formData.get("file")
+    if (!(file instanceof File)) {
+        return { success: false as const, message: "No file provided." }
+    }
+
+    if (!isAcceptedType(file)) {
+        return {
+            success: false as const,
+            message: `"${file.name}" has an unsupported type (${file.type || "unknown"}). Supported: PDF, images, txt/md.`,
+        }
+    }
+
+    if (file.size > MAX_UPLOAD_BYTES) {
+        return {
+            success: false as const,
+            message: `"${file.name}" is too large. Maximum size is 15MB.`,
+        }
     }
 
     const user = await prisma.user.findUnique({
         where: { email: session.user.email }
     })
 
-    if (!user) throw new Error("User not found in database")
+    if (!user) {
+        return { success: false as const, message: "User not found in database." }
+    }
 
-    const blob = await put(`documents/${user.id}/${file.name}`, file, {
+    const safeName = sanitizeFileName(file.name)
+
+    const blob = await put(`documents/${user.id}/${safeName}`, file, {
         access: "private",
     })
 
-    let extractedText = ""
     try {
-        if (file.type === "application/pdf") {
-            const arrayBuffer = await file.arrayBuffer()
-            const buffer = Buffer.from(arrayBuffer)
-            const pdfData = await pdfParse(buffer)
-            extractedText = pdfData.text
-        }
-    } catch (error) {
-        console.error("Error extracting text from PDF:", error)
-    }
+        const { text } = await extractDocumentContent(file)
 
-    await prisma.document.create({
-        data: {
-            userId: user.id,
-            title: file.name,
-            content: extractedText,
-            fileUrl: blob.url,
+        await prisma.document.create({
+            data: {
+                userId: user.id,
+                title: safeName,
+                fileType: file.type || "application/octet-stream",
+                content: text,
+                fileUrl: blob.url,
+            }
+        })
+    } catch (error) {
+        console.error("Content extraction failed:", error)
+        await del(blob.url).catch(() => {})
+        return {
+            success: false as const,
+            message: `Could not extract text from "${file.name}". Please try a different file.`,
         }
-    })
+    }
 
     revalidatePath("/dashboard")
 
-    return { success: true, url: blob.url }
+    return { success: true as const, url: blob.url }
 }

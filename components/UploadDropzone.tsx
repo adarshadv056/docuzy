@@ -7,23 +7,34 @@ import { uploadDocument } from "@/actions/upload"
 export default function UploadDropzone() {
     const [isDragging, setIsDragging] = useState(false)
     const [isUploading, setIsUploading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     const handleFiles = async (files: File[]) => {
         if (!files.length) return
         setIsUploading(true)
+        setError(null)
 
         try {
+            const failures: string[] = []
             for (const file of files) {
                 const formData = new FormData()
                 formData.append("file", file)
-                await uploadDocument(formData)
+                const result = await uploadDocument(formData)
+                if (!result.success) failures.push(result.message)
             }
+            if (failures.length > 0) setError(failures.join(" "))
         } catch (error) {
             console.error("Upload failed:", error)
+            setError("Something went wrong while uploading. Please try again.")
         } finally {
             setIsUploading(false)
         }
+    }
+
+    const openFilePicker = () => {
+        setError(null)
+        fileInputRef.current?.click()
     }
 
     return (
@@ -48,6 +59,7 @@ export default function UploadDropzone() {
                 ref={fileInputRef}
                 onChange={(e) => {
                     if (e.target.files) handleFiles(Array.from(e.target.files))
+                    e.target.value = ""
                 }}
             />
 
@@ -65,10 +77,16 @@ export default function UploadDropzone() {
                         {isUploading ? "Uploading to workspace..." : "Upload a new document"}
                     </h3>
                     <p className="text-sm text-zinc-500 max-w-sm mx-auto">
-                        Drag and drop your PDF or text file here, or <button onClick={() => fileInputRef.current?.click()} className="text-indigo-400 hover:text-indigo-300 transition-colors">browse files</button>
+                        Drag and drop your PDF or text file here, or <button onClick={openFilePicker} className="text-indigo-400 hover:text-indigo-300 transition-colors">browse files</button>
                     </p>
                 </div>
             </div>
+
+            {error && (
+                <p className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                    {error}
+                </p>
+            )}
         </div>
     )
 }
