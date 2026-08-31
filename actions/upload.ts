@@ -9,6 +9,7 @@ import {
     MAX_UPLOAD_BYTES,
     ACCEPTED_IMAGE_TYPES,
 } from "@/lib/processors/extractor"
+import { chunkDocument } from "@/lib/processors/chunker"
 
 function isAcceptedType(file: File): boolean {
     return (
@@ -67,9 +68,9 @@ export async function uploadDocument(formData: FormData) {
     })
 
     try {
-        const { text } = await extractDocumentContent(file)
+        const { text, method } = await extractDocumentContent(file)
 
-        await prisma.document.create({
+        const document = await prisma.document.create({
             data: {
                 userId: user.id,
                 title: safeName,
@@ -78,9 +79,20 @@ export async function uploadDocument(formData: FormData) {
                 fileUrl: blob.url,
             }
         })
+        const chunks = chunkDocument(text, method)
+        if (chunks.length > 0) {
+            await prisma.documentChunk.createMany({
+                data: chunks.map((c) => ({
+                    documentId: document.id,
+                    content: c.content,
+                    chunkIndex: c.chunkIndex,
+                    metadata: c.metadata,
+                })),
+            })
+        }
     } catch (error) {
         console.error("Content extraction failed:", error)
-        await del(blob.url).catch(() => {})
+        await del(blob.url).catch(() => { })
         return {
             success: false as const,
             message: `Could not extract text from "${file.name}". Please try a different file.`,
