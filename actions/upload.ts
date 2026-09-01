@@ -10,6 +10,7 @@ import {
     ACCEPTED_IMAGE_TYPES,
 } from "@/lib/processors/extractor"
 import { chunkDocument } from "@/lib/processors/chunker"
+import { embedTexts } from "@/lib/gemini"
 
 function isAcceptedType(file: File): boolean {
     return (
@@ -89,6 +90,30 @@ export async function uploadDocument(formData: FormData) {
                     metadata: c.metadata,
                 })),
             })
+
+            const rows = await prisma.documentChunk.findMany({
+                where: { documentId: document.id },
+                orderBy: { chunkIndex: "asc" },
+                select: { id: true, content: true },
+            })
+
+            if (rows.length > 0) {
+                const embeddings = await embedTexts(
+                    rows.map((r) => r.content)
+                )
+
+                const ids = rows.map((r) => r.id)
+                const vecs = embeddings.map(
+                    (v) => `[${v.join(",")}]`
+                )
+
+                await prisma.$executeRaw`
+                    UPDATE "DocumentChunk" c
+                    SET embedding = v.vec::vector
+                    FROM unnest(${ids}::text[], ${vecs}::text[]) AS v(id, vec)
+                    WHERE c.id = v.id
+                `
+            }
         }
     } catch (error) {
         console.error("Content extraction failed:", error)

@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai"
 
 const DEFAULT_MODEL = "gemini-3.6-flash"
-
+const DEFAULT_EMBEDDING_MODEL = "text-embedding-004"
 const EXTRACTION_PROMPT = `You are a precise document transcription engine.
 Transcribe the attached document faithfully into clean Markdown.
 
@@ -97,4 +97,22 @@ export async function describeImage(
     throw new Error("Empty image description returned by Gemini")
   }
   return text.replace(/\s*\n+\s*/g, "; ")
+}
+
+export async function embedTexts(texts: string[]): Promise<number[][]> {
+  if (texts.length === 0) return []
+
+  const response = await getClient().models.embedContent({
+    model: process.env.GEMINI_EMBEDDING_MODEL || DEFAULT_EMBEDDING_MODEL,
+    contents: texts,
+  })
+
+  const embeddings = response.embeddings ?? []
+  if (embeddings.length !== texts.length) {
+    throw new Error(
+      `Expected ${texts.length} embeddings but received ${embeddings.length}`
+    )
+  }
+
+  return embeddings.map((e) => e.values ?? [])
 }
