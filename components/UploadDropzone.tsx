@@ -3,12 +3,14 @@
 import { useState, useRef } from "react"
 import { UploadCloud, FileText, Loader2 } from "lucide-react"
 import { uploadDocument } from "@/actions/upload"
+import { useToast } from "@/components/ToastProvider"
 
 export default function UploadDropzone() {
     const [isDragging, setIsDragging] = useState(false)
     const [isUploading, setIsUploading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
+    const toast = useToast()
 
     const handleFiles = async (files: File[]) => {
         if (!files.length) return
@@ -17,11 +19,18 @@ export default function UploadDropzone() {
 
         try {
             const failures: string[] = []
+            let successCount = 0
             for (const file of files) {
                 const formData = new FormData()
                 formData.append("file", file)
                 const result = await uploadDocument(formData)
-                if (!result.success) failures.push(result.message)
+                if (result.success) successCount++
+                else failures.push(`${file.name}: ${result.message}`)
+            }
+            if (successCount > 0) {
+                toast.success(
+                    `${successCount} document${successCount > 1 ? "s" : ""} uploaded. Ask about them in chat.`
+                )
             }
             if (failures.length > 0) setError(failures.join(" "))
         } catch (error) {

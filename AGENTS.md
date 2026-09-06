@@ -2,10 +2,9 @@
 
 AI-powered document workspace (pre-launch MVP): users upload documents (PDFs,
 images/scans), text is extracted, then chunked → embedded (pgvector) → retrieved
-for AI chat. **Chunking and embedding are implemented; retrieval and the AI
-chat are NOT yet** — the `DocumentChunk.embedding` column is populated at upload,
-but nothing queries it. Standalone client-side PDF/image tools live under
-`app/tools/`.
+for AI chat. **Chunking, embedding, retrieval, and the streaming AI chat are
+implemented.** Vectors are populated at upload and queried via the chat route.
+Standalone client-side PDF/image tools live under `app/tools/`.
 
 <!-- BEGIN:nextjs-agent-rules -->
 ## This is NOT the Next.js you know
@@ -36,7 +35,7 @@ Known Next 16 differences active in this repo:
   currently outdated; app code imports from `@prisma/client`).
 - `DocumentChunk` has `content`, `chunkIndex`, `metadata Json?`, and
   `embedding Unsupported("vector")?` — the embedding column is populated at
-  upload via raw SQL (see Embeddings section); nothing queries it yet.
+  upload via raw SQL and queried by the chat route (see Retrieval section).
 
 ## Environment
 
@@ -47,14 +46,83 @@ GEMINI_EMBEDDING_MODEL.
 ## Embeddings (`lib/gemini.ts` + `actions/upload.ts`)
 
 - `embedTexts(texts)` → `number[][]` calls `models.embedContent` with
-  `text-embedding-004` by default (override via `GEMINI_EMBEDDING_MODEL`).
-  Batch — one API call for all chunk texts, NOT a per-chunk loop.
+  `text-embedding-004` as code fallback, overridden by `GEMINI_EMBEDDING_MODEL`
+  (currently `gemini-embedding-001` in `.env`). Batch — one API call for all
+  chunks/query texts, NOT a per-chunk loop.
 - Vectors are written with raw `$executeRaw` — `embedding` is
   `Unsupported("vector")`, so the typed Prisma client can't write it. `upload.ts`
   does `createMany` (rows, empty embedding) → `findMany` to get row ids →
   a single `UPDATE ... FROM unnest(...)` batches all vectors.
 - This means uploads are synchronous: a large doc adds one embed call + one
   batched UPDATE. None of this runs when chunks are absent.
+
+## Retrieval + chat (`lib/processors/retrieval.ts` + `app/api/chat/route.ts`)
+
+- `searchChunks(userId, query, topK?, priorityDocumentIds?)` embeds the query
+  via the SAME `embedTexts` (so dimensions match stored vectors), then raw
+  `$queryRaw` does `c.embedding <=> $vec::vector` cosine similarity, filtered by
+  `d."userId"` (ownership enforced in SQL, never by a client-sent ID). Returns
+  top-K chunks with `score` (1 - distance) and `metadata.pageNumbers`.
+  `DEFAULT_TOP_K = 8`. When `priorityDocumentIds` is non-empty, the ORDER BY
+  adds `(d.id = ANY($ids)) DESC` FIRST — selected documents' chunks rank ahead
+  of everything else (still similarity-ordered among themselves).
+- `streamAnswer(userId, question, onDelta, priorityDocumentIds?)` chooses one of
+  two paths:
+  - **RAG**: only when the question is NOT casual AND there is a confident match.
+    The trigger is `RAG_TRIGGER_SCORE (0.5)`, but when the user explicitly
+    prioritized documents (`priorityDocumentIds.length > 0`) it drops to
+    `WEAK_MATCH_SCORE (0.35)` — deliberate selection is a strong signal that the
+    selected doc is the intended target. Unprioritized searches keep the tight
+    0.5 trigger so the 0.35–0.5 gray band never feeds context (weak matches
+    like coursework notes must NOT reach the model). Casual queries are matched
+    by `looksCasual()` regexes (greetings, "who are you", bare math) and always
+    skip RAG so a greeting never gets sources. Calls `generateContentStream`
+    with `RAG_PROMPT` → model cites `[n]` excerpts. Returns `found: true`.
+  - **General fallback** (otherwise): `streamGeneralAnswer` calls Gemini WITHOUT
+    doc context using `GENERAL_PROMPT` (identity = "Docuzy AI"), temperature 0.7.
+    Scripted note tells Gemini to flag "couldn't find it in your documents" only
+    when the user seems to be asking about their own docs. Returns `found: false`
+    → no Sources shown. This is how "hi", "who are you", Taj Mahal trivia get
+    real answers without bogus citations.
+  - Latency guardrails: RAG context is capped at `CONTEXT_MAX_CHUNKS = 6` chunks
+    of `CHUNK_MAX_CHARS = 2000` each (retrieval still scans top-8). There is NO
+    `maxOutputTokens` cap — answers run to completion.
+  - `buildRagContext(chunks, { minScore?, maxDocs? })` is document-aware: chunks
+    must clear `max(minScore, topScore - CONTEXT_SCORE_MARGIN (0.12))`, then
+    only the top `MAX_CONTEXT_DOCS = 2` documents contribute (≤
+    `PER_DOC_MAX_CHUNKS = 3` chunks each). When documents are prioritized,
+    `maxDocs` is raised to `max(priorityCount, 2)` so every selected doc can
+    feed context. Only chunks that clear the floor are sent — 3 matches means 3
+    chunks, never a padded top-6.
+  - **Sources are citation-derived**: the route accumulates the full streamed
+    answer, then `sourcesFromCitations` keeps only the context chunks whose
+    `[n]` index actually appears in the answer (deduped to one entry per
+    document, page numbers merged). No citations → `found: false` → no Sources.
+    Sources always reflect what the answer used.
+- `/api/chat` accepts `{ question, prioritizeDocumentIds }`; the route filters
+  the requested ids through `prisma.document.findMany({ where: { id: { in },
+  userId } })` — ownership re-checked server-side, foreign ids silently dropped.
+- `/api/chat` is an SSE route handler (server actions can't stream). Client
+  (`components/ChatZone.tsx`) reads the stream via `getReader()` +
+  `TextDecoder({ stream: true })`, appends `delta` events (all `setMessages`
+  updates are PURE — React StrictMode dev double-invokes state updaters, and
+  impure mutation caused duplicated text), then attaches the trailing `sources`
+  event as citations. Empty assistant bubble + `isStreaming` renders animated
+  "thinking" dots. Assistant bubbles render via `react-markdown` +
+  `remark-gfm` (`Components.code`) — `[n]` markers are pre-tokenized as inline
+  code and styled as citation chips.
+- `RAG_PROMPT`, `GENERAL_PROMPT`, and `getClient` are exported from
+  `lib/gemini.ts` for reuse.
+- Chat input controls (`ChatZone.tsx`, dashboards passes `documents` prop): the
+  **Plus** button opens a multi-select popup (list of the user's docs) that
+  sends `prioritizeDocumentIds` with every message; the **Mic** button uses the
+  browser Web Speech API (`SpeechRecognition`/`webkitSpeechRecognition`) for
+  voice-to-text (Chrome/Edge only; fallback shows a toast). Selection persists
+  across messages until "Clear selection".
+- Toasts: `components/ToastProvider.tsx` (context + `useToast()`, framer-motion
+  animated, auto-dismiss 4s). Wired into `DocumentGrid` (delete failures) and
+  `UploadDropzone` (upload success) and mic errors. Any client subtree that
+  needs toast must live under the provider (currently wraps `/dashboard` only).
 
 ## Extraction pipeline
 
@@ -117,6 +185,14 @@ document row; they cascade on delete). Pure functions, no deps, no test file.
 - Auth checks are three-layered by design: `proxy.ts` route guard → `auth()`
   check in the page → ownership re-check inside every server action/route.
   Copy the pattern in `actions/upload.ts`; never trust a client-sent ID alone.
+- Document deletion lives in `actions/delete-document.ts` (server action,
+  `DeleteDocumentButton` client component, grid owned by `DocumentGrid` client
+  component on `/dashboard`): `DocumentGrid` removes the card optimistically
+  on confirm and restores it on failure; the action looks the doc up with
+  `where: { id, userId }` (ownership enforced), deletes the DB row FIRST (fast,
+  chunks cascade), then `del(doc.fileUrl)` (errors swallowed/logged), then
+  `revalidatePath("/dashboard")`. Blob delete failure must not fail the DB
+  delete.
 - `rag-backend/` contains only an unused Python venv — there is no Python
   service; do not build against it.
 - `CLAUDE.md` simply imports this file (`@AGENTS.md`); keep guidance here.
