@@ -1,28 +1,39 @@
 "use client"
 
-import { motion, useScroll, useTransform } from "framer-motion";
-import { ArrowRight, Sparkles, FileText, Files, Image } from "lucide-react";
+import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { useRef } from "react";
+import { ArrowRight, Sparkles, FileText, Files, Image as ImageIcon } from "lucide-react";
 import Button from "@/components/landing/ui/Button";
 import WorkspacePreview from "@/components/landing/ui/WorkspacePreview";
 
 export default function Hero() {
-  const { scrollY } = useScroll();
-  const glowOpacity = useTransform(scrollY, [0, 500], [1, 0]);
-  const glowScale = useTransform(scrollY, [0, 500], [1, 0.8]);
-  const previewY = useTransform(scrollY, [0, 500], [0, -100]);
+  const heroRef = useRef<HTMLElement>(null);
+  const prefersReduced = useReducedMotion();
+  // Scope scroll progress to the hero itself instead of the whole page
+  // (DESIGN.md §13 scroll guardrails) so the glow only fades as the hero leaves.
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"],
+  });
+  const glowOpacity = useTransform(scrollYProgress, [0, 1], [1, 0]);
+  const glowScale = useTransform(scrollYProgress, [0, 1], [1, 0.9]);
 
   return (
     <>
-      <section className="relative min-h-screen flex flex-col items-center pt-2 pb-20 px-6 overflow-hidden bg-[#FAFAFA] text-zinc-900">
-        {/* Background glow - animated on scroll (original blurred-indigo blob) */}
+      <section
+        ref={heroRef}
+        id="top"
+        className="relative min-h-screen flex flex-col items-center pt-2 pb-20 px-6 overflow-hidden bg-[#FAFAFA] text-zinc-900"
+      >
+        {/* Background glow — scoped to the hero, hidden from assistive tech */}
         <motion.div
           aria-hidden="true"
-          style={{ opacity: glowOpacity, scale: glowScale }}
+          style={prefersReduced ? { opacity: 1 } : { opacity: glowOpacity, scale: glowScale }}
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] md:w-[600px] h-[300px] md:h-[400px] bg-indigo-600/30 blur-[100px] md:blur-[120px] rounded-full pointer-events-none"
         />
 
         <div className="relative z-10 w-full max-w-5xl px-6 py-24 mx-auto text-center flex flex-col items-center">
-          {/* Eyebrow badge - matches waitlist page */}
+          {/* Eyebrow badge */}
           <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -33,7 +44,7 @@ export default function Hero() {
             <span>Docuzy · Live</span>
           </motion.div>
 
-          {/* Headline - from waitlist page */}
+          {/* Headline */}
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -41,10 +52,13 @@ export default function Hero() {
             className="text-5xl md:text-7xl font-bold tracking-tight mb-6 text-transparent bg-clip-text bg-gradient-to-b from-zinc-800 to-zinc-500 selection:text-zinc-900 leading-[1.05]"
           >
             Your Entire Workspace. <br className="hidden md:block" />
-            Organized & <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-indigo-600">AI-Powered.</span>
+            Organized &{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-indigo-600">
+              AI-Powered.
+            </span>
           </motion.h1>
 
-          {/* Description - from waitlist page */}
+          {/* Description */}
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -52,7 +66,8 @@ export default function Hero() {
             className="max-w-2xl mx-auto text-lg md:text-xl text-zinc-600 mb-10 font-medium leading-relaxed"
           >
             Every editing tool you need, in one place. Organize your files, share your work,
-            and let our AI handle the heavy lifting with <span className="font-bold text-zinc-900">Docuzy</span>.
+            and let our AI handle the heavy lifting with{" "}
+            <span className="font-bold text-zinc-900">Docuzy</span>.
           </motion.p>
 
           {/* CTAs */}
@@ -62,11 +77,11 @@ export default function Hero() {
             transition={{ duration: 0.7, delay: 0.3, ease: "easeOut" }}
             className="flex flex-col sm:flex-row items-center gap-4"
           >
-            <Button size="lg" variant="primary" className="group">
+            <Button href="/login" size="lg" variant="primary" className="group">
               Get Started Free
               <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
             </Button>
-            <Button variant="outline" size="lg" className="group">
+            <Button href="#ai" size="lg" variant="outline" className="group">
               Explore the Workspace
               <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
             </Button>
@@ -88,7 +103,7 @@ export default function Hero() {
               Documents
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <Image className="w-3.5 h-3.5 text-indigo-500" />
+              <ImageIcon className="w-3.5 h-3.5 text-indigo-500" />
               Images
             </span>
             <span className="inline-flex items-center gap-1.5">
@@ -99,14 +114,10 @@ export default function Hero() {
         </div>
       </section>
 
-
-      {/* Dashboard Preview Section - overlaps with hero */}
-      <motion.section
-        style={{ y: previewY }}
-        className="relative -mt-20 z-10"
-      >
+      {/* Dashboard preview — controlled overlap below the hero (DESIGN.md §10) */}
+      <section className="relative -mt-20 z-10">
         <WorkspacePreview />
-      </motion.section>
+      </section>
     </>
   );
 }
