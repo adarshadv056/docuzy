@@ -6,6 +6,27 @@ for AI chat. **Chunking, embedding, retrieval, and the streaming AI chat are
 implemented.** Vectors are populated at upload and queried via the chat route.
 Standalone client-side PDF/image tools live under `app/tools/`.
 
+## Project documentation
+
+Product, design, content, and flow decisions live in these repo-root docs. Read
+the relevant one before changing UI, copy, or navigation — they are the source of
+truth, not this file:
+
+- `PRODUCT.md` — product definition, launch scope, target users, capabilities,
+  supported file types, pricing, and product truth.
+- `DESIGN.md` — visual system and design tokens (color palette, typography,
+  layout, components, motion, responsive, accessibility). **Authoritative for all
+  color decisions** (the light-mode Zinc/Indigo system); the typeface is **Geist**,
+  matching `next/font` in `app/layout.tsx`.
+- `CONTENT.md` — page architecture, approved marketing copy, naming, metadata,
+  and SEO.
+- `USER-FLOWS.md` — routes, navigation, user journeys, and access/redirect rules.
+
+Ownership rule: product truth comes from `PRODUCT.md`, flow truth from
+`USER-FLOWS.md`, wording/SEO from `CONTENT.md`, and visual truth from
+`DESIGN.md`. Follow the doc responsible for a given concern rather than inventing
+a compromise, and keep the docs' cross-references to each other intact.
+
 <!-- BEGIN:nextjs-agent-rules -->
 ## This is NOT the Next.js you know
 
