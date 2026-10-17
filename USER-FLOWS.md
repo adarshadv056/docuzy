@@ -323,13 +323,17 @@ Deleting a file, if supported, must clearly communicate the consequences and req
 
 ## 11. All Tools Flow
 
-1. The user selects All Tools.
-2. Docuzy displays the available tools grouped or organized for easy discovery.
+The directory of every tool lives at `/tools` (public, no sign-in required). Individual tools are served by the dynamic route `/tools/<slug>`, where `<slug>` comes from the tool catalog.
+
+1. The user selects All Tools (or "Browse all tools" from the landing page/nav).
+2. Docuzy displays the available tools grouped by category (PDF, Image, Other) for easy discovery.
 3. The user selects a tool.
-4. Docuzy opens the corresponding tool page.
+4. Docuzy opens the corresponding tool page at `/tools/<slug>`.
 5. The user supplies an input file.
 6. The user processes the file.
 7. The user downloads or saves the result.
+
+Tools that are not built yet appear in the directory as clearly labelled, non-clickable "Coming soon" entries — never as if they were functional (DESIGN.md).
 
 Tool discovery and tool usage should remain available to anonymous users wherever the tool is intended to be public.
 

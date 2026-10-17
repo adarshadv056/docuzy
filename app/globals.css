@@ -1,8 +1,47 @@
 @import "tailwindcss";
 
 :root {
+  /* Light mode only — DESIGN.md §10/§17. Never follow the OS dark scheme. */
+  color-scheme: light;
+
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Docuzy design tokens (DESIGN.md §17) */
+  --docuzy-canvas: #FAFAFA;
+  --docuzy-surface: #FFFFFF;
+  --docuzy-surface-subtle: #F4F4F5;
+  --docuzy-surface-hover: #F4F4F5;
+
+  --docuzy-text: #18181B;
+  --docuzy-text-secondary: #52525B;
+  --docuzy-text-muted: #71717A;
+
+  --docuzy-border: #E4E4E7;
+  --docuzy-border-strong: #D4D4D8;
+
+  --docuzy-indigo-300: #A5B4FC;
+  --docuzy-indigo-400: #818CF8;
+  --docuzy-indigo-500: #6366F1;
+  --docuzy-indigo-600: #4F46E5;
+  --docuzy-indigo-700: #4338CA;
+  --docuzy-indigo-tint: #EEF2FF;
+  --docuzy-indigo-glow: rgba(79, 70, 229, 0.14);
+
+  --docuzy-accent-lime: #D9F99D;
+
+  --docuzy-success: #15803D;
+  --docuzy-warning: #A16207;
+  --docuzy-danger: #B91C1C;
+  --docuzy-info: #1D4ED8;
+
+  --docuzy-radius-control: 0.625rem;
+  --docuzy-radius-card: 0.875rem;
+  --docuzy-radius-panel: 1.125rem;
+
+  --docuzy-shadow-card: 0 8px 28px rgba(24, 24, 27, 0.06);
+  --docuzy-shadow-preview: 0 20px 60px rgba(24, 24, 27, 0.10);
+  --docuzy-shadow-popover: 0 12px 36px rgba(24, 24, 27, 0.12);
 }
 
 @theme inline {
@@ -12,15 +51,9 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--docuzy-canvas);
+  color: var(--docuzy-text);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }

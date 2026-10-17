@@ -420,7 +420,7 @@ Preserve the original hero's composition as closely as practical, with the dark 
 
 - Use a clear document-reader + AI-panel composition so the relationship between source document and response is immediately visible.
 - Show a readable title, believable text density, one selected/highlighted passage, a question, and a contextual answer.
-- The UI must not imply source citations, precise passage attribution, or features unless the actual implementation supports them.
+- Source citations are supported by the live chat (grounded answers cite `[n]` excerpts and a Sources list is derived from them), so a grounded answer and a Sources reference may be shown. Do not imply precise passage highlighting, page-level accuracy, or other features unless the implementation supports them.
 - Favor a horizontal split on wide screens; stack or provide a sensible switcher on mobile.
 - Indigo can mark the question focus, selected passage, AI icon, or one answer detail. Keep most panels white.
 

@@ -4,7 +4,8 @@ AI-powered document workspace (pre-launch MVP): users upload documents (PDFs,
 images/scans), text is extracted, then chunked → embedded (pgvector) → retrieved
 for AI chat. **Chunking, embedding, retrieval, and the streaming AI chat are
 implemented.** Vectors are populated at upload and queried via the chat route.
-Standalone client-side PDF/image tools live under `app/tools/`.
+Standalone client-side PDF/image tools live under `app/tools/` (see the Tools
+section — routes are catalog-driven, not one folder per tool).
 
 ## Project documentation
 
@@ -26,6 +27,14 @@ Ownership rule: product truth comes from `PRODUCT.md`, flow truth from
 `USER-FLOWS.md`, wording/SEO from `CONTENT.md`, and visual truth from
 `DESIGN.md`. Follow the doc responsible for a given concern rather than inventing
 a compromise, and keep the docs' cross-references to each other intact.
+
+### Resolving conflicts with the user's request
+
+If any instruction in the project documentation conflicts with the user's latest
+request, do not blindly follow either one. Explain the conflict and ask for the
+user's confirmation before changing any existing instruction or source-of-truth
+document. Once the user confirms, follow the user's decision and update the
+relevant documentation so the docs and the implementation stay consistent.
 
 <!-- BEGIN:nextjs-agent-rules -->
 ## This is NOT the Next.js you know
@@ -199,6 +208,51 @@ document row; they cascade on delete). Pure functions, no deps, no test file.
   `page.render({ canvasContext: ctx, viewport })` then
   `canvas.toBuffer("image/png")`. This is the enabler for per-page Gemini
   vision (instead of the current whole-doc IMG_HEAVY routing).
+
+## Tools (`/tools`)
+
+All public PDF/image tools are client-side and catalog-driven:
+
+- **`lib/tools-catalog.ts` is the single source of truth.** Each entry declares
+  `name`, `description`, `icon`, `status`, and (for built tools) `slug`, `seo`
+  (`title`/`description`), `width`, and `related`. The landing tools shelf,
+  Navbar, Footer, `/tools` directory, `/tools/[slug]` route, per-page metadata,
+  OG image, sitemap, breadcrumbs, and related-tool links all derive from it.
+  Add a tool by adding one catalog entry + one widget; never hand-write a route
+  folder, metadata, or sitemap entry.
+- **One route, not 17 folders.** `app/tools/[slug]/page.tsx` is a server
+  component: `generateStaticParams()` returns `availableSlugs()`,
+  `generateMetadata()` uses `toolMetadata(tool)`, unknown/`coming-soon` slugs
+  `notFound()`. The shell renders `ToolHeader` (H1 = `seo.title`) →
+  `ToolRunner` (client, resolves the widget) → `RelatedTools`.
+- **Widgets** live in `components/tools/widgets/<slug>.tsx` and are pure
+  interactive content — the page supplies the header/outer container, so a
+  widget must not include its own page wrapper or H1. `registry.tsx` maps
+  slug → widget. Any widget that imports `pdfjs-dist` must be loaded with
+  `{ ssr: false }` (pdfjs touches browser globals at import time):
+  `add-page-numbers`, `watermark-pdf`, `sign-pdf`, `pdf-to-image`,
+  `compress-pdf`. `ssr: false` only skips server-rendering the *widget* — the
+  page's `generateMetadata` still runs on the server for every tool.
+- **`compress-pdf` is hybrid**, so it never bloats a file:
+  1. A **lossless structural pass** (`pdf-lib` `save({ useObjectStreams: true })`)
+     preserves selectable text and is kept whenever it is smaller.
+  2. It only **rasterizes** (pdfjs → white-filled canvas, since JPEG has no
+     alpha → JPEG at a tier's DPI/quality → pdf-lib rebuild) when the PDF
+     actually contains images, detected via `getOperatorList()` image ops.
+  3. The rasterized version replaces the lossless one only if it is ≥10% smaller
+     (`RASTER_WIN_RATIO = 0.9`); otherwise text stays selectable.
+  The result card reports which path won (`raster` / `vector` / `original`) and
+  only shows the amber "already optimized" notice when nothing beat the
+  original. Tiers live in a single `TIERS` constant in the widget.
+  **Gotcha:** compare candidate sizes as *numbers* — `pdfjs.getDocument({ data })`
+  detaches the source `ArrayBuffer`, so re-reading a buffer's `byteLength` after
+  the fact returns 0 and silently rejects every raster result.
+- Tool pages intentionally render **without Navbar/Footer** — only the
+  breadcrumb (`app/tools/layout.tsx`) provides navigation back to `/tools`.
+- URLs are flat `/tools/<slug>` (category is UI-only). `next.config.ts` holds
+  permanent redirects from the older nested paths; keep them working.
+- Titles: root `app/layout.tsx` sets `title.template = "%s — Docuzy"`, so
+  catalog `seo.title` and page titles must be **brandless**.
 
 ## Conventions
 

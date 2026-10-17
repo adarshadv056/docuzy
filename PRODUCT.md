@@ -172,6 +172,8 @@ Features such as summarization, advanced search, folders, tags, sharing, and add
 
 They should not be treated as complete merely because they are included in the product vision.
 
+Confirmed and in scope: **document sharing** is part of the launch scope, so marketing copy may reference sharing your work. **AI answers are grounded in document content and cite the excerpts they use** — the chat returns `[n]` citations and derives a Sources list from them — so copy may reference grounded answers and sources.
+
 ### Outside the immediate scope
 
 Unless explicitly added to the product plan, Docuzy should not expand into:

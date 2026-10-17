@@ -127,7 +127,7 @@ Use section anchors for links that stay on the homepage. Use the real auth/app r
 
 **Eyebrow:**
 
-`Docuzy · AI Document Workspace`
+`Docuzy · Live`
 
 **H1:**
 
@@ -137,7 +137,7 @@ Use section anchors for links that stay on the homepage. Use the real auth/app r
 
 **Supporting copy:**
 
-> Store, organize, edit, and understand your documents in one AI-powered workspace. Work with PDFs, files, and images using built-in tools and AI—without switching between apps.
+> Every editing tool you need, in one place. Organize your files, share your work, and let our AI handle the heavy lifting with Docuzy.
 
 **Primary CTA:** `Get Started Free`
 
@@ -154,7 +154,7 @@ Use section anchors for links that stay on the homepage. Use the real auth/app r
 - Do not add another paragraph, feature-card row, waitlist language, social proof, or statistics to the hero.
 - The product preview below the hero should use a real Docuzy screenshot when available. Until then, use a clearly identified, code-built mock interface based on real planned UI—not a random stock dashboard and not a fake screenshot presented as live software.
 - Only use “Get Started Free” if the live signup and free access are genuinely available. Otherwise use an accurate CTA such as “Get Started” or “Join the Waitlist.”
-- Do not claim document sharing in this section unless that capability is confirmed as available at launch.
+- Document sharing is confirmed for launch (see `PRODUCT.md`), so the hero may reference sharing your work. Keep other capability claims limited to features confirmed at launch.
 
 ## 4.3 Problem → solution
 
@@ -240,7 +240,7 @@ Use these small labels in the product visual:
 - The central visual should explain the relationship between a document and its AI conversation: document content on one side, question and answer on the other.
 - Prefer a realistic code-built UI mockup until a real screenshot exists. Use legible sample content rather than endless grey skeleton lines.
 - If the product only supports specific file types for AI, say “supported documents” or name verified formats. Do not imply that every uploaded file can be queried.
-- Do not promise perfect accuracy, hallucination-free answers, citations, or source highlighting unless those behaviors are verified in the live feature.
+- Citations and source references are verified in the live chat (answers cite `[n]` excerpts and a Sources list is derived from them), so a grounded answer and a Sources reference may be shown. Do not promise perfect accuracy or hallucination-free answers, and do not imply exact passage-level highlighting or page-number accuracy before those are implemented.
 - Do not make voice interaction a headline promise unless it is implemented and available at launch.
 
 ## 4.5 PDF and image tools
@@ -522,10 +522,12 @@ Use these as draft SEO labels, not as authority over actual routes or feature sc
 | Tool | Suggested H1 | Search intent to answer |
 |---|---|---|
 | Merge PDF | Merge PDF Files Online | Combine multiple PDF files into one document |
-| Compress PDF | Compress a PDF Online | Reduce PDF file size while preserving usable quality |
+| Split PDF | Split a PDF Online | Extract a page range or specific pages into a new PDF |
+| Compress PDF | Compress a PDF Online | Reduce PDF file size at one of three quality levels (High, Medium, Low) |
 | Add page numbers | Add Page Numbers to a PDF | Number PDF pages before sharing or submitting |
 | PDF to images | Convert PDF Pages to Images | Export pages from a PDF as image files |
 | Sign PDF | Sign a PDF Online | Add a signature to a PDF using the actual supported workflow |
+| Watermark PDF | Add a Watermark to a PDF | Stamp text or an image across PDF pages |
 | Image to PDF | Convert Images to PDF | Combine or convert supported images into a PDF |
 | Compress image | Compress an Image Online | Reduce an image's file size |
 | Crop image | Crop an Image Online | Crop an image to the required frame or dimensions supported by the tool |
@@ -534,6 +536,10 @@ Use these as draft SEO labels, not as authority over actual routes or feature sc
 | Convert to PNG | Convert an Image to PNG | Convert supported image formats to PNG |
 | Convert to WebP | Convert an Image to WebP | Convert supported image formats to WebP |
 | Watermark | Add a Watermark to an Image | Add a watermark using the actual controls provided |
+| HTML to Image | Convert HTML to an Image | Render an HTML snippet into a PNG or JPG image |
+| JSON to CSV | Convert JSON to CSV | Turn a JSON file into a CSV spreadsheet |
+
+These labels are stored per tool in `lib/tools-catalog.ts` (`seo.title` / `seo.description`) and rendered by the `/tools/[slug]` route. Update the catalog — not this table — when a tool's metadata changes; keep the two in sync.
 
 ### Related-tool links
 
@@ -569,7 +575,9 @@ These are content requirements, not approval to create extra homepage sections. 
 
 **Suggested intro:** `Find the PDF and image tool you need—from merging and compressing PDFs to cropping, resizing, and converting images.`
 
-Organize tools by task/category, include visible search only if it works, and link each item to its real route. Avoid long descriptions for every tool.
+Route: `/tools`. Organize tools by category — **PDF Tools**, **Image Tools**, **Other Tools** — with a working search field, and link each item to its real route. Avoid long descriptions for every tool.
+
+The directory is driven by the single source of truth in `lib/tools-catalog.ts`; the landing tools shelf, navbar, footer, the `/tools/[slug]` tool routes, per-page metadata, and the sitemap all derive from that same catalog. Tools whose `status` is `available` link to their real `/tools/<slug>` route; everything else appears as a non-clickable **Coming soon** entry so users are never misled about what works.
 
 ### AI workspace / AI chat page
 
