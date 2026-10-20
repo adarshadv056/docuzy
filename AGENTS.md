@@ -220,7 +220,7 @@ All public PDF/image tools are client-side and catalog-driven:
   OG image, sitemap, breadcrumbs, and related-tool links all derive from it.
   Add a tool by adding one catalog entry + one widget; never hand-write a route
   folder, metadata, or sitemap entry.
-- **One route, not 17 folders.** `app/tools/[slug]/page.tsx` is a server
+- **One route, not one folder per tool.** `app/tools/[slug]/page.tsx` is a server
   component: `generateStaticParams()` returns `availableSlugs()`,
   `generateMetadata()` uses `toolMetadata(tool)`, unknown/`coming-soon` slugs
   `notFound()`. The shell renders `ToolHeader` (H1 = `seo.title`) →
@@ -231,8 +231,9 @@ All public PDF/image tools are client-side and catalog-driven:
   slug → widget. Any widget that imports `pdfjs-dist` must be loaded with
   `{ ssr: false }` (pdfjs touches browser globals at import time):
   `add-page-numbers`, `watermark-pdf`, `sign-pdf`, `pdf-to-image`,
-  `compress-pdf`. `ssr: false` only skips server-rendering the *widget* — the
-  page's `generateMetadata` still runs on the server for every tool.
+  `compress-pdf`, `organize-pdf`, `rotate-pdf`. `ssr: false` only skips
+  server-rendering the *widget* — the page's `generateMetadata` still runs on
+  the server for every tool.
 - **`compress-pdf` is hybrid**, so it never bloats a file:
   1. A **lossless structural pass** (`pdf-lib` `save({ useObjectStreams: true })`)
      preserves selectable text and is kept whenever it is smaller.
@@ -247,6 +248,38 @@ All public PDF/image tools are client-side and catalog-driven:
   **Gotcha:** compare candidate sizes as *numbers* — `pdfjs.getDocument({ data })`
   detaches the source `ArrayBuffer`, so re-reading a buffer's `byteLength` after
   the fact returns 0 and silently rejects every raster result.
+- **`organize-pdf` is a visual page organizer** (client-only, `pdfjs` + `pdf-lib`):
+  - One thumbnail grid; the **whole card** is the drag target (dnd-kit
+    `rectSortingStrategy`). The card carries the sortable `attributes` +
+    `listeners` with `role="group"` (not `role="button"`, so the inner
+    controls stay valid buttons); the per-card buttons stop propagation of
+    pointer/mouse/touch start events so they never begin a drag.
+  - State is `PageItem[] = { id, sourceIndex, rotation, removed }` — order is the
+    array order, `rotation` is an extra 0/90/180/270 delta, `removed` pages stay
+    in the grid dimmed so they can be restored (nothing is destructive until
+    Apply).
+  - Thumbnails render lazily via `IntersectionObserver` (~320px wide JPEG), so
+    long documents stay responsive.
+  - **Rotation is additive:** on export `setRotation(degrees(base + delta))`,
+    where `base` is the page's existing `/Rotate` — never overwrite it. pdfjs
+    `getViewport({ rotation })` *replaces* the page rotation, so the thumbnail
+    must pass `page.rotate + delta`.
+  - Export = `copyPages` in the current order → apply rotation → `save()`.
+    Applying shows a result card (pages kept, size before/after) with an
+    explicit Download — no auto-download.
+  - **Gotcha:** pdfjs detaches the `ArrayBuffer` it is given, so the widget
+    keeps the original bytes for pdf-lib and hands pdfjs a `slice(0)` copy.
+- **`rotate-pdf` turns pages without re-rendering** (pdf-lib + pdfjs preview):
+  - Direction (`DIRECTIONS`: right 90°, left 270°, flip 180°) is a **delta added
+    to the page's existing `/Rotate`** — `setRotation(degrees((base + delta) %
+    360))` — never an overwrite.
+  - Scope is "all pages" or a page range. **Every page is copied to the output**;
+    only pages inside the range are turned, the rest keep their original
+    rotation. (Copying just the affected pages silently drops the others.)
+  - The preview uses pdfjs `getViewport({ rotation: page.rotate + delta })`
+    because pdfjs *replaces* the page rotation instead of adding to it.
+  - Pages are turned via `/Rotate`, so text and vectors stay sharp and
+    selectable — nothing is rasterized.
 - Tool pages intentionally render **without Navbar/Footer** — only the
   breadcrumb (`app/tools/layout.tsx`) provides navigation back to `/tools`.
 - URLs are flat `/tools/<slug>` (category is UI-only). `next.config.ts` holds
