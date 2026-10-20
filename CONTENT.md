@@ -530,6 +530,7 @@ Use these as draft SEO labels, not as authority over actual routes or feature sc
 | Watermark PDF | Add a Watermark to a PDF | Stamp text or an image across PDF pages |
 | Organize PDF Pages | Organize PDF Pages Online | Reorder, rotate, and delete PDF pages visually |
 | Rotate PDF | Rotate PDF Pages Online | Rotate every page of a PDF or just a page range |
+| Flip PDF | Flip PDF Pages Online | Mirror a PDF horizontally or vertically, page by page or across the whole file |
 | Image to PDF | Convert Images to PDF | Combine or convert supported images into a PDF |
 | Compress image | Compress an Image Online | Reduce an image's file size |
 | Crop image | Crop an Image Online | Crop an image to the required frame or dimensions supported by the tool |

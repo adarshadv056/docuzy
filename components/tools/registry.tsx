@@ -14,6 +14,7 @@ export const toolWidgets: Record<string, ComponentType> = {
   "compress-pdf": dynamic(() => import("./widgets/compress-pdf"), { ssr: false }),
   "organize-pdf": dynamic(() => import("./widgets/organize-pdf"), { ssr: false }),
   "rotate-pdf": dynamic(() => import("./widgets/rotate-pdf"), { ssr: false }),
+  "flip-pdf": dynamic(() => import("./widgets/flip-pdf"), { ssr: false }),
   "add-page-numbers": dynamic(() => import("./widgets/add-page-numbers"), { ssr: false }),
   "watermark-pdf": dynamic(() => import("./widgets/watermark-pdf"), { ssr: false }),
   "sign-pdf": dynamic(() => import("./widgets/sign-pdf"), { ssr: false }),

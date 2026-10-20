@@ -231,9 +231,9 @@ All public PDF/image tools are client-side and catalog-driven:
   slug → widget. Any widget that imports `pdfjs-dist` must be loaded with
   `{ ssr: false }` (pdfjs touches browser globals at import time):
   `add-page-numbers`, `watermark-pdf`, `sign-pdf`, `pdf-to-image`,
-  `compress-pdf`, `organize-pdf`, `rotate-pdf`. `ssr: false` only skips
-  server-rendering the *widget* — the page's `generateMetadata` still runs on
-  the server for every tool.
+  `compress-pdf`, `organize-pdf`, `rotate-pdf`, `flip-pdf`. `ssr: false` only
+  skips server-rendering the *widget* — the page's `generateMetadata` still
+  runs on the server for every tool.
 - **`compress-pdf` is hybrid**, so it never bloats a file:
   1. A **lossless structural pass** (`pdf-lib` `save({ useObjectStreams: true })`)
      preserves selectable text and is kept whenever it is smaller.
@@ -280,6 +280,23 @@ All public PDF/image tools are client-side and catalog-driven:
     because pdfjs *replaces* the page rotation instead of adding to it.
   - Pages are turned via `/Rotate`, so text and vectors stay sharp and
     selectable — nothing is rasterized.
+- **`flip-pdf` mirrors pages with a matrix, not `/Rotate`** (pdf-lib + pdfjs):
+  - A mirror can't be expressed with `/Rotate`, so the page content is wrapped:
+    `page.node.wrapContentStreams(context.register(context.flateStream('q\n<matrix> cm\n')), context.register(context.flateStream('Q\n')))`.
+    The original content stream stays untouched between the two wrappers, so
+    text and vectors keep their quality.
+  - **The mirror axis depends on the page's `/Rotate`:** when a page is turned
+    90°/270° the reader's axes are swapped, so a left-right mirror becomes a
+    top-bottom mirror in page space (`mirrorAcrossVerticalAxis = (axis ===
+    'horizontal') !== quarterTurn`). The matrix reflects across the centre of
+    the page's **crop box**.
+  - `/Rotate` is left untouched by a flip.
+  - The widget **builds the mirrored document first** and renders the preview
+    from it, so the preview always matches the downloaded file. The build is
+    keyed by `settingsKey` (`axis|from|to`) so a stale document is detected
+    without extra state (and ESLint's `set-state-in-effect` rule stays happy).
+  - Annotations and form fields live outside the content stream, so they are
+    **not** mirrored — the UI says so.
 - Tool pages intentionally render **without Navbar/Footer** — only the
   breadcrumb (`app/tools/layout.tsx`) provides navigation back to `/tools`.
 - URLs are flat `/tools/<slug>` (category is UI-only). `next.config.ts` holds
