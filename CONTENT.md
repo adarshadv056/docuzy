@@ -531,6 +531,17 @@ Use these as draft SEO labels, not as authority over actual routes or feature sc
 | Organize PDF Pages | Organize PDF Pages Online | Reorder, rotate, and delete PDF pages visually |
 | Rotate PDF | Rotate PDF Pages Online | Rotate every page of a PDF or just a page range |
 | Flip PDF | Flip PDF Pages Online | Mirror a PDF horizontally or vertically, page by page or across the whole file |
+| Crop / Resize PDF Pages | Crop / Resize PDF Pages | Crop PDF pages to a chosen area or resize them to a standard page size |
+| Header and Footer | Add Header and Footer to PDF | Add repeated headers and footers with custom positions, page numbers, and dates |
+| Annotate PDF | Annotate PDF Online | Highlight text, draw freehand, add comments, and draw shapes on PDF pages |
+| Redact PDF | Redact PDF Online | Permanently black out or white out sensitive text and information in PDF files |
+| Edit PDF Online | Edit PDF Online | Add new text, whiteout and replace existing text, and insert images into PDF files |
+| Flatten PDF | Flatten PDF Online | Merge form fields, checkboxes, and layers into non-editable page content |
+| Extract Text | Extract Text from PDF | Copy the words out of any PDF as plain text or download as a text file |
+| Remove & Edit Metadata | Edit & Remove PDF Metadata | View, edit, or wipe PDF document properties and author information |
+| Repair Corrupted PDF | Repair PDF Online | Rebuild damaged cross-reference tables and recover unreadable pages |
+| Improve PDF Colours | Improve PDF Contrast & Colors | Boost contrast, whiten dirty backgrounds, and enhance scanned PDFs |
+| Encrypt PDF | Encrypt PDF Online | Password protect PDF files with military-grade AES-256 encryption |
 | Image to PDF | Convert Images to PDF | Combine or convert supported images into a PDF |
 | Compress image | Compress an Image Online | Reduce an image's file size |
 | Crop image | Crop an Image Online | Crop an image to the required frame or dimensions supported by the tool |

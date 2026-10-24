@@ -209,6 +209,18 @@ document row; they cascade on delete). Pure functions, no deps, no test file.
   `canvas.toBuffer("image/png")`. This is the enabler for per-page Gemini
   vision (instead of the current whole-doc IMG_HEAVY routing).
 
+## Security & Dependencies: In-House First
+
+- **Zero Unnecessary NPM Packages**: Never install arbitrary, unvetted, or convenience
+  third-party npm packages. External dependencies create severe supply-chain risks
+  (hijacking, malicious takeovers, breaking deprecations, and unmaintained code).
+- **In-House Standards First**: If a feature can be built using native web standards
+  (Web Crypto API `crypto.subtle`, HTML Canvas, Web Workers, standard Streams/Fetch) and
+  our core established foundational packages (`pdf-lib`, `pdfjs-dist`, `sharp`, `react`),
+  it **MUST be authored in-house**.
+- Only well-vetted, universally adopted, standard ecosystem packages are permitted, and
+  adding any new package requires explicit justification and user confirmation.
+
 ## Tools (`/tools`)
 
 All public PDF/image tools are client-side and catalog-driven:
@@ -231,9 +243,9 @@ All public PDF/image tools are client-side and catalog-driven:
   slug → widget. Any widget that imports `pdfjs-dist` must be loaded with
   `{ ssr: false }` (pdfjs touches browser globals at import time):
   `add-page-numbers`, `watermark-pdf`, `sign-pdf`, `pdf-to-image`,
-  `compress-pdf`, `organize-pdf`, `rotate-pdf`, `flip-pdf`. `ssr: false` only
-  skips server-rendering the *widget* — the page's `generateMetadata` still
-  runs on the server for every tool.
+  `compress-pdf`, `organize-pdf`, `rotate-pdf`, `flip-pdf`, `crop-pdf`.
+  `ssr: false` only skips server-rendering the *widget* — the page's
+  `generateMetadata` still runs on the server for every tool.
 - **`compress-pdf` is hybrid**, so it never bloats a file:
   1. A **lossless structural pass** (`pdf-lib` `save({ useObjectStreams: true })`)
      preserves selectable text and is kept whenever it is smaller.
@@ -297,6 +309,125 @@ All public PDF/image tools are client-side and catalog-driven:
     without extra state (and ESLint's `set-state-in-effect` rule stays happy).
   - Annotations and form fields live outside the content stream, so they are
     **not** mirrored — the UI says so.
+- **`crop-pdf` crops and resizes without re-rendering** (pdf-lib + pdfjs):
+  - The visible page is the **CropBox ∩ MediaBox** (pdfjs renders exactly
+    that), so cropping = `setCropBox` + `setMediaBox` to the chosen rect.
+    Content outside is hidden, not deleted — the UI says so.
+  - The crop is defined as **margins on the visible page** (in points), so the
+    same crop applies to pages of different sizes; each page clamps the
+    margins to its own size.
+  - A quarter-turn page swaps the visible axes, so the widget converts
+    between visible-page space and user space with `displayToUser` instead
+    of assuming an upright page.
+  - "Fit content" resize composes the visible-page scale with the page's
+    rotation and back again, which **cancels the rotation terms out** — the
+    matrix is always a pure scale + translate `[s 0 0 s e f]`, and `/Rotate`
+    is left untouched (the page keeps its orientation and reads as the target
+    size on screen; for a quarter turn the new user-space box is swapped).
+    **Why:** PDF renderers (pdfjs included) mis-render a `cm` matrix that
+    carries rotation terms — a rotated page came out completely blank. A pure
+    scale/translate matrix renders correctly everywhere.
+    "Page only" just changes the box and leaves the content alone.
+  - Crop UI is **drag-first with a single source of truth**: the controlled
+    `react-image-crop` percent selection is the only crop state (seeded 90%
+    centred per page, `keepSelection` so clicking outside cannot wipe it), and
+    the margins, point values and applied CropBox all derive from it — never
+    stored in parallel. The percent crop is converted to visible-page points
+    using the viewport's display size.
+  - "Trim white margins" renders the page, scans for non-white pixels and
+    snaps the selection onto the detected ink bounds (the derived margins
+    follow).
+- **`header-footer` adds repeated text and dividers to pages** (pdf-lib + pdfjs):
+  - 6-zone positioning model: Left, Center, and Right for both Header and Footer
+    with dynamic token placeholders (`{page}`, `{total}`, `{date}`, `{title}`).
+  - Geometry: Header sits at top margin (`size.height - margin - fontSize * ASCENT_RATIO`),
+    footer sits at bottom margin (`margin + fontSize * DESCENT_RATIO`). Coordinates
+    are computed on the visible page (`CropBox ∩ MediaBox`) and mapped into PDF user space
+    with `displayToUser`, rotated with `degrees(rotation)` to stay upright across 0/90/180/270.
+  - Hairline dividers (0.5 pt) can be toggled below header and/or above footer.
+  - Page selection supports all pages or custom range, plus a "Skip first page"
+    toggle for cover pages.
+  - Preview composites rendered text and rules over a cached `pdfjs` canvas render.
+- **`annotate-pdf` adds highlights, drawings, text notes, and shapes to PDFs** (pdf-lib + pdfjs):
+  - Interactive multi-tool workspace: Freehand pen, semi-transparent highlighter,
+    inline text notes, rectangle, circle/ellipse, and directional arrows.
+  - Coordinate system: Annotations use normalized (0..1) page coordinates,
+    ensuring responsiveness across zoom levels and export resolutions.
+  - Multi-page support with per-page undo/redo history stacks and clear functions.
+  - Export: Renders annotation layers to high-resolution transparent PNGs (2x retina
+    resolution) and embeds them via `pdfDoc.embedPng()` mapped to visible display
+    coordinates (`displayToUser`) and page rotation (`degrees(rotation)`). Original PDF
+    vector text and artwork remain completely sharp and un-rasterized.
+- **`redact-pdf` permanently hides sensitive information** (pdf-lib + pdfjs):
+  - Interactive drag-to-mark bounding boxes for redaction targets with custom labels
+    (`[REDACTED]`, `CONFIDENTIAL`, custom text, or solid cover).
+  - Dual security modes:
+    1. **Permanent Raster Redaction (Recommended)**: Burns solid blackout/whiteout
+       boxes directly into high-res pixels (2x retina) and replaces the page with a clean
+       rasterized sheet, physically purging the underlying text stream from the PDF.
+    2. **Vector Overlay**: Draws opaque blackout/whiteout rectangles over page coordinates
+       while leaving other page text selectable.
+  - Multi-page support with per-page and document-wide redaction tracking, undo history,
+    and live visual feedback.
+- **`edit-pdf` adds and edits text, replacements, and images in PDFs** (pdf-lib + pdfjs):
+  - Interactive multi-element editor: Add new text blocks, whiteout & replace existing words,
+    insert PNG/JPG images and stamps, and draw bounding boxes.
+  - Interactive canvas overlay: Absolute element positioning with drag-to-move, corner resize handles,
+    inline textarea editing, and duplicate/delete actions.
+  - Typography engine: Standard PDF fonts (Helvetica, Times, Courier) with regular, bold, italic,
+    and bold-italic variants, variable font size, text alignment, and text color.
+  - Native Vector PDF Export: Text is drawn directly into user space via `page.drawText()`,
+    whiteout patches via `page.drawRectangle()`, and images via `page.drawImage()`, preserving
+    all original vector text and sharpness.
+- **`flatten-pdf` merges forms and layers into pages** (pdf-lib + pdfjs):
+  - Form detection: Inspects `pdfDoc.getForm().getFields()` and detects interactive inputs,
+    checkboxes, and signature entries.
+  - Dual flattening modes:
+    1. **Vector Form Flattening (`form.flatten()`)**: Permanently locks AcroForm fields
+       into native page content while keeping text selectable, crisp, and lightweight.
+    2. **Full Page Rasterization**: Renders pages at 2x retina print resolution and
+       re-embeds them as clean sheets, guaranteeing universal visual compatibility and
+       preventing any digital tampering.
+- **`extract-text` extracts text and words from PDFs** (pdfjs):
+  - Extraction pipeline: Reads text spans using `page.getTextContent()`, preserving vertical
+    line breaks and word spacing across all pages.
+  - Interactive workspace: Per-page word counts, page navigation, live keyword search,
+    one-click clipboard copying (per page or full document), and plain text (`.txt`) download.
+- **`pdf-metadata` reads and edits document properties** (pdf-lib):
+  - Inspection & Editing: Directly manipulates PDF Info dictionary (`getTitle`, `setTitle`,
+    `setAuthor`, `setSubject`, `setKeywords`, `setCreator`, `setProducer`, dates).
+  - Privacy Scrub: One-click action wipes all identifiable author and software tags from the PDF.
+- **`repair-pdf` reconstructs damaged or corrupted PDFs** (pdf-lib):
+  - Error recovery parser: Loads malformed or truncated PDFs with `throwOnInvalidObject: false`
+    and `ignoreEncryption: true`.
+  - Reconstruction: Rebuilds missing xref tables, repairs trailer dictionaries, purges
+    corrupted object streams, and re-serializes clean, standards-compliant PDF documents.
+- **`improve-pdf-contrast` enhances scan legibility and colors** (pdfjs + pdf-lib):
+  - Pixel processing: Real-time canvas pixel filter adjusting contrast (-60%..+100%),
+    brightness, grayscale conversion, and document binarization (pure black and white thresholding).
+  - Presets: Clean Scan (whitening dirty paper), High Contrast (faint ink), Grayscale, and Color Invert.
+  - Export: Re-embeds high-res (2x retina) enhanced sheets into clean PDF pages.
+- **`encrypt-pdf` password-protects PDF documents** (in-house native AES-256 via Web Crypto + pdf-lib):
+  - In-house native engine: Strictly in-house pure TypeScript implementation (`lib/pdf/encrypt-native.ts`)
+    implementing ISO 32000-2:2020 (PDF 2.0 / AES-256 / Revision 6 / V=5, R=6).
+  - Web Crypto acceleration: Uses hardware-accelerated `crypto.subtle` for SHA-256/384/512 hashing,
+    AES-128-CBC Algorithm 2.B KDF rounds, and AES-256-CBC per-object stream encryption. Zero external packages.
+  - Granular permissions: Open password, owner password, printing permission, copying restriction,
+    and document modification flags.
+- **`unlock-pdf` removes password protection and restrictions** (in-house native AES-256 via Web Crypto + pdf-lib):
+  - In-house native engine: Decrypts ISO 32000-2 AES-256 protected PDFs (`lib/pdf/unlock-native.ts`)
+    using synthetic PKCS#7 block-aligned Web Crypto decryption and strips the `/Encrypt` dictionary.
+  - Auto-detection: Instantly identifies permissions-only restriction (1-click unlock with no open password needed)
+    versus document open password lock.
+- **`extract-images` pulls embedded photos and illustrations from PDFs** (pdfjs + native in-house ZIP):
+  - In-house pipeline: Parses page operator lists (`paintImageXObject`, `paintInlineImageXObject`) to retrieve
+    original JPEG bitstreams and rasterize bitmap buffers onto high-res canvas (preserving transparency).
+  - Bulk packaging: Bundles extracted images into standard `.zip` files using pure in-house ZIP generator
+    (`lib/zip/zip-native.ts`) using native `CompressionStream('deflate-raw')`. Zero npm packages.
+  - Gallery view: Shows resolution, format, page origin, file size, multi-select, and 1-click batch download.
+- **`pdf-to-zip` bundles multiple PDFs into a ZIP archive** (native in-house ZIP):
+  - Multi-file bundling: Multi-PDF upload with drag-and-drop, individual file removal, and collision-safe file naming.
+  - Compression control: Toggle between Deflate (compressed) and Store (instant archive) using `lib/zip/zip-native.ts`.
 - Tool pages intentionally render **without Navbar/Footer** — only the
   breadcrumb (`app/tools/layout.tsx`) provides navigation back to `/tools`.
 - URLs are flat `/tools/<slug>` (category is UI-only). `next.config.ts` holds
