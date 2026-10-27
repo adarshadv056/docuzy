@@ -19,6 +19,7 @@ export function crc32(bytes: Uint8Array): number {
 export interface ZipEntry {
   name: string;
   data: Uint8Array;
+  store?: boolean;
 }
 
 /**
@@ -39,6 +40,29 @@ async function deflateData(data: Uint8Array): Promise<Uint8Array> {
       return new Uint8Array(buffer);
     } catch {
       // Fallback to uncompressed if deflate-raw is not supported
+      return data;
+    }
+  }
+  return data;
+}
+
+/**
+ * Decompresses raw deflate data using native DecompressionStream('deflate-raw')
+ */
+async function inflateData(data: Uint8Array): Promise<Uint8Array> {
+  if (typeof DecompressionStream !== 'undefined') {
+    try {
+      const stream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(data);
+          controller.close();
+        },
+      });
+      const decompressedStream = stream.pipeThrough(new DecompressionStream('deflate-raw'));
+      const response = new Response(decompressedStream);
+      const buffer = await response.arrayBuffer();
+      return new Uint8Array(buffer);
+    } catch {
       return data;
     }
   }
@@ -73,7 +97,7 @@ export async function createZip(
     let compressedData = entry.data;
     let isCompressed = false;
 
-    if (options.compression !== 'store') {
+    if (options.compression !== 'store' && !entry.store) {
       const deflated = await deflateData(entry.data);
       if (deflated.length < uncompressedSize && deflated !== entry.data) {
         compressedData = deflated;
@@ -169,3 +193,82 @@ export async function createZip(
 
   return zip;
 }
+
+/**
+ * Extracts all files from a standard ZIP archive.
+ * Supports Deflate (method 8) and Stored (method 0).
+ * 100% In-house, zero external dependencies.
+ */
+export async function readZip(data: Uint8Array): Promise<ZipEntry[]> {
+  const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+  const decoder = new TextDecoder();
+  const entries: ZipEntry[] = [];
+
+  // Find EOCD (End of Central Directory)
+  let eocdPos = -1;
+  const maxSearch = Math.min(data.byteLength, 65557);
+  for (let i = data.byteLength - 22; i >= Math.max(0, data.byteLength - maxSearch); i--) {
+    if (view.getUint32(i, true) === 0x06054b50) {
+      eocdPos = i;
+      break;
+    }
+  }
+
+  if (eocdPos === -1) {
+    // Fallback: parse sequentially through local file headers
+    let pos = 0;
+    while (pos + 30 <= data.byteLength) {
+      if (view.getUint32(pos, true) !== 0x04034b50) break;
+      const method = view.getUint16(pos + 8, true);
+      const compressedSize = view.getUint32(pos + 18, true);
+      const nameLen = view.getUint16(pos + 26, true);
+      const extraLen = view.getUint16(pos + 28, true);
+      const name = decoder.decode(data.subarray(pos + 30, pos + 30 + nameLen));
+      const dataStart = pos + 30 + nameLen + extraLen;
+      const slice = data.subarray(dataStart, dataStart + compressedSize);
+      let decompressed = slice;
+      if (method === 8) {
+        decompressed = await inflateData(slice);
+      }
+      entries.push({ name, data: decompressed });
+      pos = dataStart + compressedSize;
+    }
+    return entries;
+  }
+
+  const numEntries = view.getUint16(eocdPos + 10, true);
+  const cdOffset = view.getUint32(eocdPos + 16, true);
+
+  let cdPos = cdOffset;
+  for (let i = 0; i < numEntries; i++) {
+    if (cdPos + 46 > data.byteLength) break;
+    if (view.getUint32(cdPos, true) !== 0x02014b50) break;
+
+    const method = view.getUint16(cdPos + 10, true);
+    const compressedSize = view.getUint32(cdPos + 20, true);
+    const nameLen = view.getUint16(cdPos + 28, true);
+    const extraLen = view.getUint16(cdPos + 30, true);
+    const commentLen = view.getUint16(cdPos + 32, true);
+    const localHeaderOffset = view.getUint32(cdPos + 42, true);
+
+    const name = decoder.decode(data.subarray(cdPos + 46, cdPos + 46 + nameLen));
+
+    if (localHeaderOffset + 30 <= data.byteLength) {
+      const localExtraLen = view.getUint16(localHeaderOffset + 28, true);
+      const localNameLen = view.getUint16(localHeaderOffset + 26, true);
+      const dataStart = localHeaderOffset + 30 + localNameLen + localExtraLen;
+      const slice = data.subarray(dataStart, dataStart + compressedSize);
+
+      let decompressed = slice;
+      if (method === 8) {
+        decompressed = await inflateData(slice);
+      }
+      entries.push({ name, data: decompressed });
+    }
+
+    cdPos += 46 + nameLen + extraLen + commentLen;
+  }
+
+  return entries;
+}
+

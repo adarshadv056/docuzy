@@ -410,6 +410,7 @@ Include only real, maintained profiles.
 - Remove placeholder links before launch.
 - Do not link to empty pages, empty blog categories, or social profiles that do not exist.
 - Use the current year dynamically rather than hardcoding it permanently.
+- Show only a curated set of tool links in the footer (top tools per category) plus deep links to the full directory at `/tools#pdf` and `/tools#image`. Never enumerate every available tool in the footer — the full list lives on the `/tools` page.
 
 ---
 
@@ -546,6 +547,9 @@ Use these as draft SEO labels, not as authority over actual routes or feature sc
 | Compress image | Compress an Image Online | Reduce an image's file size |
 | Crop image | Crop an Image Online | Crop an image to the required frame or dimensions supported by the tool |
 | Resize image | Resize an Image Online | Change image dimensions to a chosen size |
+| Rotate image | Rotate an Image Online | Rotate an image by 90° steps or a fine angle, flip it, and download a new file |
+| Flip image | Flip an Image Online | Mirror an image horizontally or vertically and download a new file |
+| Remove image metadata | Remove Image Metadata Online | Strip EXIF, GPS location, and camera data from a photo |
 | Convert to JPG | Convert an Image to JPG | Convert supported image formats to JPG |
 | Convert to PNG | Convert an Image to PNG | Convert supported image formats to PNG |
 | Convert to WebP | Convert an Image to WebP | Convert supported image formats to WebP |

@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { availableToolsInCategory } from "@/lib/tools-catalog"
+import { availableToolsInCategory, findTool, toolHref } from "@/lib/tools-catalog"
 
 // CONTENT.md §4.9. Only link to routes/pages that actually exist — no empty
 // placeholder links, no invented social profiles, no pricing until finalized.
@@ -11,9 +11,39 @@ const productLinks = [
   { name: "How It Works", href: "/#how-it-works" },
 ]
 
-// Sourced from the shared catalog — only tools that exist today (CONTENT.md §4.5).
-const pdfToolLinks = availableToolsInCategory("pdf").map((tool) => ({ name: tool.name, href: tool.href }))
-const imageToolLinks = availableToolsInCategory("image").map((tool) => ({ name: tool.name, href: tool.href }))
+// Curated top tools shown in the footer so it stays compact. The full catalog
+// (55 tools) lives on /tools; these resolve through findTool so a tool that
+// later becomes "coming-soon" silently drops out instead of a dead link.
+const footerPdfToolSlugs = [
+  "merge-pdf",
+  "compress-pdf",
+  "pdf-to-word",
+  "image-to-pdf",
+  "sign-pdf",
+  "encrypt-pdf",
+]
+
+const footerImageToolSlugs = [
+  "compress-image",
+  "resize-image",
+  "crop-image",
+  "rotate-image",
+  "flip-image",
+  "remove-image-metadata",
+]
+
+const footerPdfTools = footerPdfToolSlugs
+  .map((slug) => findTool(slug))
+  .filter((t): t is NonNullable<typeof t> => Boolean(t))
+  .map((t) => ({ name: t.name, href: toolHref(t) }))
+
+const footerImageTools = footerImageToolSlugs
+  .map((slug) => findTool(slug))
+  .filter((t): t is NonNullable<typeof t> => Boolean(t))
+  .map((t) => ({ name: t.name, href: toolHref(t) }))
+
+const pdfToolCount = availableToolsInCategory("pdf").length
+const imageToolCount = availableToolsInCategory("image").length
 
 export default function Footer() {
   return (
@@ -42,26 +72,42 @@ export default function Footer() {
         <div>
           <div className="font-semibold text-zinc-900 mb-4">PDF tools</div>
           <ul className="space-y-3 text-zinc-500">
-            {pdfToolLinks.map((link) => (
+            {footerPdfTools.map((link) => (
               <li key={link.name}>
                 <Link href={link.href} className="transition-colors hover:text-zinc-900">
                   {link.name}
                 </Link>
               </li>
             ))}
+            <li>
+              <Link
+                href="/tools#pdf"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 transition-colors hover:text-indigo-700"
+              >
+                All {pdfToolCount} PDF tools →
+              </Link>
+            </li>
           </ul>
         </div>
 
         <div>
           <div className="font-semibold text-zinc-900 mb-4">Image tools</div>
           <ul className="space-y-3 text-zinc-500">
-            {imageToolLinks.map((link) => (
+            {footerImageTools.map((link) => (
               <li key={link.name}>
                 <Link href={link.href} className="transition-colors hover:text-zinc-900">
                   {link.name}
                 </Link>
               </li>
             ))}
+            <li>
+              <Link
+                href="/tools#image"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 transition-colors hover:text-indigo-700"
+              >
+                All {imageToolCount} image tools →
+              </Link>
+            </li>
           </ul>
         </div>
       </div>

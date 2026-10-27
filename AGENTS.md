@@ -428,6 +428,51 @@ All public PDF/image tools are client-side and catalog-driven:
 - **`pdf-to-zip` bundles multiple PDFs into a ZIP archive** (native in-house ZIP):
   - Multi-file bundling: Multi-PDF upload with drag-and-drop, individual file removal, and collision-safe file naming.
   - Compression control: Toggle between Deflate (compressed) and Store (instant archive) using `lib/zip/zip-native.ts`.
+- **`markdown-to-pdf` converts Markdown to formatted PDFs** (react-markdown + pdf-lib):
+  - Interactive split-pane editor: Real-time rendered document preview, custom typography themes (Modern, Academic, Minimal),
+    A4/Letter page selection, and automatic page slice calculation with page numbering.
+- **`pdf-to-markdown` converts PDFs to clean editable Markdown** (pdfjs-dist + react-markdown):
+  - Intelligent structure recognition: Spatial line reconstruction, automated heading level detection based on font scale,
+    bold/italic text style parsing, list item detection, and side-by-side Markdown preview with 1-click clipboard copying.
+- **`csv-to-pdf` converts spreadsheets to formatted PDF tables** (pdf-lib):
+  - In-house CSV/TSV tokenizer, dynamic column width computation, zebra striping, corporate themes (Indigo, Slate, Emerald),
+    repeated table headers across page wraps, and native vector PDF generation.
+- **`pdf-to-csv` extracts tabular data into CSV spreadsheets** (pdfjs-dist):
+  - Coordinate clustering: Groups text elements by spatial coordinates (X and Y intervals) into rows and columns,
+    delimiter formatting (Comma, Semicolon, Tab), and live editable data grid with 1-click clipboard and CSV export.
+- **`html-to-pdf` renders HTML/CSS into paginated PDFs** (html-to-image + pdf-lib):
+  - Sandboxed live preview, custom page formats (A4/Letter), portrait/landscape orientation, and multi-page slicing.
+- **`pdf-to-html` converts PDFs into standalone HTML5 webpages** (pdfjs-dist):
+  - Dual modes: Semantic flow (responsive readable articles) and exact positioning (retaining original PDF page geometry).
+- **In-House Office Suite (`lib/office/openxml-native.ts` & `lib/zip/zip-native.ts`)**:
+  - Pure in-house OpenXML engine generating and reading genuine `.docx`, `.xlsx`, and `.pptx` archives using `createZip()` and `readZip()` with native `CompressionStream` and `DecompressionStream('deflate-raw')`. Zero external npm dependencies.
+  - **`pdf-to-word`**: Extracts structured text lines, font sizes, headings, and bold/italic runs from PDF pages via `pdfjs-dist` into editable Microsoft Word `.docx` documents.
+  - **`word-to-pdf`**: Converts Word/markdown outlines with page break markers and typography styling into paginated PDF documents via `pdf-lib`.
+  - **`pdf-to-excel`**: Identifies tabular data via 2D spatial clustering (X and Y coordinates) with smart delimiter detection and cell matrix generation into genuine Microsoft Excel `.xlsx` spreadsheets.
+  - **`excel-to-pdf`**: Transforms spreadsheets, CSV, and TSV tables into publication-ready PDF tables with zebra striping, repeated column headers, and custom font sizing via `pdf-lib`.
+  - **`pdf-to-powerpoint`**: Parses PDF pages, detects slide titles and structured bullet points, and generates editable Microsoft PowerPoint `.pptx` presentations.
+  - **`ppt-to-pdf`**: Reads `.pptx` slides via `readZip()` or slide outlines and compiles 16:9 widescreen presentation PDFs with vector typography and customizable color themes via `pdf-lib`.
+- **`pdf-to-ebook` converts PDFs into reflowable EPUB e-books** (in-house native EPUB 3.0 via `lib/ebook/epub-native.ts` + `pdfjs-dist`):
+  - Pure in-house EPUB 3.0 packaging engine (`lib/ebook/epub-native.ts`): Creates valid OCF containers, `content.opf` package manifests, HTML5 semantic chapters (`<section epub:type="chapter">`), EPUB 3 navigation document (`toc.xhtml`), and backward-compatible EPUB 2 NCX (`toc.ncx`) using native `createZip()`. Zero external dependencies.
+  - Reflow & layout engine: Filters out repeating running headers/footers and page numbers, groups lines by coordinates, detects headings for chapter breaks, and renders Page 1 as an embedded cover image.
+  - Interactive book studio: Live chapter reader preview, Table of Contents inspection, editable metadata (Title, Author, Publisher, Language), chapter splitting strategy (Smart Headings, Per Page, Continuous), and typography themes (Classic Serif, Modern Sans, Academic).
+- **`webpage-to-pdf` captures live URLs and web pages into PDFs** (server action SSRF fetch + html-to-image + pdf-lib):
+  - SSRF-hardened server action (`actions/fetch-webpage.ts`): Restricts private/internal IPs (`127.0.0.1`, `10.*`, `192.168.*`, `172.16.*`, `169.254.*`), validates HTTP/HTTPS protocols, injects `<base>` href, sanitizes scripts/iframes, and extracts page `<title>`.
+  - Capture & pagination modes: Continuous Long Page (single tall canvas avoiding mid-table page splits) and standard Paginated A4 / US Letter with automated vertical slicing and running header/footer stamps.
+  - Responsive viewports: Desktop (1080px), Tablet (768px), and Mobile (390px) viewports with live visual preview.
+- **`rotate-image` rotates and flips images in-browser** (native Canvas 2D):
+  - Rotation is baked into pixels: 90° step buttons plus a −180°…180° fine
+    angle, with horizontal/vertical flips applied in display space so the
+    preview and export mirror what the user sees.
+  - The output canvas is sized to the rotated bounding box, so non-quarter
+    turns never clip corners. White/black/transparent backgrounds are
+    supported; transparency exports as PNG, otherwise PNG stays PNG and every
+    other input becomes JPG.
+  - The live preview reuses the same transform at preview resolution. Export
+    caps the longest side at 8192 px for canvas safety and tells the user when
+    it had to scale.
+  - Object URLs are revoked when an image is replaced or the widget unmounts;
+    nothing is uploaded.
 - Tool pages intentionally render **without Navbar/Footer** — only the
   breadcrumb (`app/tools/layout.tsx`) provides navigation back to `/tools`.
 - URLs are flat `/tools/<slug>` (category is UI-only). `next.config.ts` holds
