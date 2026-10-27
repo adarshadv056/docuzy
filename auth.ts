@@ -22,9 +22,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         strategy: "jwt",
     },
     callbacks: {
-        async signIn({ user, profile }) {
-            console.log("USER:", user)
-            console.log("PROFILE:", profile)
+        async signIn() {
             return true
         },
         async jwt({ token, user }) {

@@ -27,10 +27,18 @@ const errorMessages: Record<string, string> = {
 // redirects." Only same-site absolute paths are allowed; anything else falls
 // back to the dashboard.
 function safeRedirect(target?: string) {
-  if (target && target.startsWith("/") && !target.startsWith("//") && !target.includes("\\")) {
-    return target
+  if (!target) return "/dashboard"
+  if (!target.startsWith("/") || target.startsWith("//") || target.includes("\\")) {
+    return "/dashboard"
   }
-  return "/dashboard"
+  // Reject control characters / newlines (header-injection hygiene).
+  if (/[^\x20-\x7E]/.test(target)) return "/dashboard"
+  // Prevent redirect loops and useless post-login destinations.
+  if (target === "/login" || target.startsWith("/login/") || target.startsWith("/login?")) {
+    return "/dashboard"
+  }
+  if (target === "/api" || target.startsWith("/api/")) return "/dashboard"
+  return target
 }
 
 export default async function LoginPage({

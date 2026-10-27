@@ -53,10 +53,10 @@ export default function ToastProvider({
               initial={{ opacity: 0, y: 12, scale: 0.97 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.97 }}
-              className={`pointer-events-auto flex w-full items-center gap-2 rounded-xl border px-4 py-3 text-sm shadow-xl backdrop-blur ${
+              className={`pointer-events-auto flex w-full items-center gap-2 rounded-xl border px-4 py-3 text-sm shadow-lg ${
                 t.type === "success"
-                  ? "border-emerald-500/30 bg-emerald-500/15 text-emerald-200"
-                  : "border-red-500/30 bg-red-500/15 text-red-200"
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                  : "border-red-200 bg-red-50 text-red-800"
               }`}
             >
               {t.type === "success" ? (

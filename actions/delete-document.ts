@@ -40,5 +40,6 @@ export async function deleteDocument(documentId: string): Promise<DeleteResult> 
   }
 
   revalidatePath("/dashboard")
+  revalidatePath("/dashboard/files")
   return { success: true }
 }

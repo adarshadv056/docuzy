@@ -39,8 +39,8 @@ export default function DeleteDocumentButton({
       title={confirming ? "Click again to confirm delete" : "Delete document"}
       className={`absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
         confirming
-          ? "bg-red-500 text-white"
-          : "text-zinc-400 hover:bg-zinc-800 hover:text-red-400"
+          ? "bg-red-600 text-white"
+          : "text-zinc-400 hover:bg-zinc-100 hover:text-red-600"
       }`}
     >
       {deleting ? (

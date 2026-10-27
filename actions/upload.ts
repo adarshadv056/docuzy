@@ -125,6 +125,7 @@ export async function uploadDocument(formData: FormData) {
     }
 
     revalidatePath("/dashboard")
+    revalidatePath("/dashboard/files")
 
     return { success: true as const, url: blob.url }
 }

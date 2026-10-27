@@ -39,7 +39,7 @@ export default function DocumentGrid({
 
   if (items.length === 0) {
     return (
-      <p className="text-zinc-400">You haven&apos;t uploaded any documents yet.</p>
+      <p className="text-zinc-500">You haven&apos;t uploaded any documents yet.</p>
     )
   }
 
@@ -48,12 +48,12 @@ export default function DocumentGrid({
       {items.map((doc) => (
         <div
           key={doc.id}
-          className="relative bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:bg-zinc-800 transition-colors"
+          className="relative bg-white border border-zinc-200 rounded-xl p-4 hover:border-zinc-300 transition-colors shadow-sm"
         >
           <DeleteDocumentButton documentId={doc.id} onDeleted={handleDelete} />
-          <FileText className="w-8 h-8 text-blue-500 mb-2" />
-          <h3 className="font-bold pr-8">{doc.title}</h3>
-          <p className="text-sm text-zinc-400">
+          <FileText className="w-8 h-8 text-indigo-600 mb-2" />
+          <h3 className="font-bold pr-8 text-zinc-900">{doc.title}</h3>
+          <p className="text-sm text-zinc-500">
             {doc.content
               ? doc.content.length > 100
                 ? `${doc.content.slice(0, 100).trimEnd()} ...`

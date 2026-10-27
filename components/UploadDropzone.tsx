@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { UploadCloud, FileText, Loader2 } from "lucide-react"
+import { UploadCloud, Loader2 } from "lucide-react"
 import { uploadDocument } from "@/actions/upload"
 import { useToast } from "@/components/ToastProvider"
 
@@ -49,8 +49,8 @@ export default function UploadDropzone() {
     return (
         <div
             className={`relative w-full p-12 border-2 border-dashed rounded-3xl text-center transition-all duration-300 ${isDragging
-                ? "border-indigo-500 bg-indigo-500/10"
-                : "border-zinc-800 bg-zinc-900/20 hover:bg-zinc-900/40 hover:border-zinc-700"
+                ? "border-indigo-500 bg-indigo-50"
+                : "border-zinc-300 bg-white hover:bg-zinc-50 hover:border-zinc-400"
                 }`}
             onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
             onDragLeave={() => setIsDragging(false)}
@@ -73,26 +73,26 @@ export default function UploadDropzone() {
             />
 
             <div className="flex flex-col items-center justify-center gap-4">
-                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${isUploading ? 'bg-indigo-500/20' : 'bg-zinc-800/50'}`}>
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${isUploading ? 'bg-indigo-50' : 'bg-zinc-100'}`}>
                     {isUploading ? (
-                        <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
+                        <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
                     ) : (
-                        <UploadCloud className="w-8 h-8 text-zinc-400" />
+                        <UploadCloud className="w-8 h-8 text-zinc-500" />
                     )}
                 </div>
 
                 <div>
-                    <h3 className="text-lg font-semibold text-zinc-200 mb-1">
+                    <h3 className="text-lg font-semibold text-zinc-900 mb-1">
                         {isUploading ? "Uploading to workspace..." : "Upload a new document"}
                     </h3>
                     <p className="text-sm text-zinc-500 max-w-sm mx-auto">
-                        Drag and drop your PDF or text file here, or <button onClick={openFilePicker} className="text-indigo-400 hover:text-indigo-300 transition-colors">browse files</button>
+                        Drag and drop your PDF or text file here, or <button onClick={openFilePicker} className="text-indigo-600 hover:text-indigo-700 transition-colors">browse files</button>
                     </p>
                 </div>
             </div>
 
             {error && (
-                <p className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                <p className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                     {error}
                 </p>
             )}

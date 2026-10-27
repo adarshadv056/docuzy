@@ -486,6 +486,11 @@ All public PDF/image tools are client-side and catalog-driven:
 - Auth checks are three-layered by design: `proxy.ts` route guard → `auth()`
   check in the page → ownership re-check inside every server action/route.
   Copy the pattern in `actions/upload.ts`; never trust a client-sent ID alone.
+- Auth redirects must preserve the intended destination via `callbackUrl`:
+  `proxy.ts` builds `/login?callbackUrl=<encoded path+search>` and
+  `app/login/page.tsx` validates it with `safeRedirect` (same-origin only,
+  no `/login` or `/api` targets, no loops). New protected routes must follow
+  this pattern rather than hardcoding `/login`.
 - Document deletion lives in `actions/delete-document.ts` (server action,
   `DeleteDocumentButton` client component, grid owned by `DocumentGrid` client
   component on `/dashboard`): `DocumentGrid` removes the card optimistically
