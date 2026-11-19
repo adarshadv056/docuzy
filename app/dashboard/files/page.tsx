@@ -1,9 +1,7 @@
 import { auth } from "@/auth"
 import prisma from "@/lib/prisma"
 import { redirect } from "next/navigation"
-import Link from "next/link"
-import UploadDropzone from "@/components/UploadDropzone"
-import DocumentGrid from "@/components/DocumentGrid"
+import AllFilesPageView, { type AllFile } from "@/components/dashboard/AllFilesPageView"
 import ToastProvider from "@/components/ToastProvider"
 
 export default async function AllFilesPage() {
@@ -18,29 +16,17 @@ export default async function AllFilesPage() {
     orderBy: { createdAt: "desc" },
   })
 
+  const files: AllFile[] = documents.map((d) => ({
+    id: d.id,
+    title: d.title,
+    fileType: d.fileType,
+    size: d.size,
+    createdAt: d.createdAt.toISOString(),
+  }))
+
   return (
     <ToastProvider>
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">All Files</h1>
-          <Link
-            href="/dashboard"
-            className="text-sm font-medium text-indigo-400 transition-colors hover:text-indigo-300"
-          >
-            ← Recent
-          </Link>
-        </div>
-
-        <DocumentGrid
-          documents={documents.map((d) => ({
-            id: d.id,
-            title: d.title,
-            content: d.content,
-          }))}
-        />
-
-        <UploadDropzone />
-      </div>
+      <AllFilesPageView files={files} />
     </ToastProvider>
   )
 }

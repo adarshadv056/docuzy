@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ChevronLeft, ChevronRight, Clock, FolderOpen, LayoutGrid, LogOut, Menu, Wrench, X } from "lucide-react"
+import { ChevronLeft, ChevronRight, Clock, FolderOpen, Home, LayoutGrid, LogOut, Menu, MessageSquare, Settings, Share2, Star, Trash2, Wrench, X } from "lucide-react"
 import { AnimatePresence, motion } from "framer-motion"
 
 interface SidebarUser {
@@ -13,10 +13,17 @@ interface SidebarUser {
 }
 
 const navItems = [
-  { label: "Recent", href: "/dashboard", icon: Clock },
+  { label: "Home", href: "/dashboard", icon: Home },
   { label: "All Files", href: "/dashboard/files", icon: FolderOpen },
-  { label: "All Tools", href: "/dashboard/tools", icon: Wrench },
+  { label: "AI Chat", href: "/dashboard/chat", icon: MessageSquare },
+  { label: "Recent", href: "/dashboard/recent", icon: Clock },
+  { label: "Starred", href: "/dashboard/starred", icon: Star },
+  { label: "Shared", href: "/dashboard/shared", icon: Share2 },
+  { label: "Tools", href: "/dashboard/tools", icon: Wrench },
+  { label: "Trash", href: "/dashboard/trash", icon: Trash2 },
 ]
+
+const settingsItem = { label: "Settings", href: "/dashboard/settings", icon: Settings }
 
 const STORAGE_KEY = "docuzy:dashboard-sidebar-collapsed"
 
@@ -29,14 +36,18 @@ export default function Sidebar({
 }) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
-  const [collapsed, setCollapsed] = useState(() => {
-    if (typeof window === "undefined") return false
+  const [collapsed, setCollapsed] = useState(false)
+
+  // Hydrate from localStorage AFTER mount to avoid SSR/CSR mismatch.
+  useEffect(() => {
     try {
-      return window.localStorage.getItem(STORAGE_KEY) === "true"
+      if (window.localStorage.getItem(STORAGE_KEY) === "true") {
+        setCollapsed(true)
+      }
     } catch {
-      return false
+      // ignore
     }
-  })
+  }, [])
 
   useEffect(() => {
     try {
@@ -51,24 +62,29 @@ export default function Sidebar({
       ? pathname === "/dashboard"
       : pathname === href || pathname.startsWith(href + "/")
 
+  const renderLink = (item: { label: string; href: string; icon: typeof Home }) => {
+    const Icon = item.icon
+    const active = isActive(item.href)
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        onClick={() => setOpen(false)}
+        title={collapsed ? item.label : undefined}
+        className={`flex items-center gap-3 rounded-lg px-2 py-2 text-sm font-medium transition-colors ${collapsed ? "justify-center" : ""} ${active ? "bg-indigo-50 text-indigo-700" : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"}`}
+      >
+        <Icon className="h-4 w-4 shrink-0" />
+        {!collapsed && <span className="truncate">{item.label}</span>}
+      </Link>
+    )
+  }
+
   const nav = (
     <nav className="flex flex-1 flex-col gap-1 overflow-hidden">
-      {navItems.map((item) => {
-        const Icon = item.icon
-        const active = isActive(item.href)
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={() => setOpen(false)}
-            title={collapsed ? item.label : undefined}
-            className={`flex items-center gap-3 rounded-lg px-2 py-2 text-sm font-medium transition-colors ${collapsed ? "justify-center" : ""} ${active ? "bg-indigo-50 text-indigo-700" : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"}`}
-          >
-            <Icon className="h-4 w-4 shrink-0" />
-            {!collapsed && <span className="truncate">{item.label}</span>}
-          </Link>
-        )
-      })}
+      {navItems.map(renderLink)}
+      {!collapsed && <div className="my-2 border-t border-zinc-200" />}
+      {collapsed && <div className="my-2 border-t border-zinc-200" />}
+      {renderLink(settingsItem)}
     </nav>
   )
 

@@ -76,6 +76,7 @@ export async function uploadDocument(formData: FormData) {
                 userId: user.id,
                 title: safeName,
                 fileType: file.type || "application/octet-stream",
+                size: file.size,
                 content: text,
                 fileUrl: blob.url,
             }

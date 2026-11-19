@@ -59,6 +59,7 @@ model Document {
   title     String
   fileUrl   String
   fileType  String          @default("application/pdf")
+  size      Int?
   content   String?
   createdAt DateTime        @default(now())
   chunks    DocumentChunk[]
